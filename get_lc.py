@@ -191,7 +191,9 @@ def get_light_curve(object_id, flux_type, TESS = False, Kepler = False,
 
     transit_info = get_transit_info(object_id)
 
-    if transit_info == None:
+
+    print(transit_info)
+    if transit_info is None:
         print('no TIC ID found')
         return None
     
@@ -281,18 +283,18 @@ def get_light_curve(object_id, flux_type, TESS = False, Kepler = False,
         if flux_type == 'qlp':
             lc_files = lk.search_lightcurve(
                 tic_id, mission='TESS', author = 'qlp'
-            ).download_all(quality_bitmask="hardest")
+            ).download_all(quality_bitmask="default")
         
         else:
             #pull in short cadence TESS SPOC LC
             lc_files_short_cadence = lk.search_lightcurve(
                 tic_id, mission='TESS', author = 'SPOC', cadence = 'short'
-            ).download_all(quality_bitmask="hardest", flux_column=flux_type)
+            ).download_all(quality_bitmask="default", flux_column=flux_type)
 
             #pull in long cadence TESS SPOC LC
             lc_files_long_cadence = lk.search_lightcurve(
                 tic_id, mission='TESS', author = 'SPOC', cadence = 'long'
-            ).download_all(quality_bitmask="hardest", flux_column=flux_type)
+            ).download_all(quality_bitmask="default", flux_column=flux_type)
 
 
             #use short cadence TESS data if if exists, else use long cadence
@@ -308,7 +310,7 @@ def get_light_curve(object_id, flux_type, TESS = False, Kepler = False,
         #pull in Kepler LC
         lc_files = lk.search_lightcurve(
             tic_id, mission='Kepler'
-        ).download_all(quality_bitmask="hardest", flux_column=flux_type)
+        ).download_all(quality_bitmask="default", flux_column=flux_type)
         
     
     quarters = []
