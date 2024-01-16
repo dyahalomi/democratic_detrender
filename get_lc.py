@@ -13,26 +13,57 @@ import lightkurve as lk
 from astropy.io import fits
 
 def tic_id_from_simbad(other_id):
-    #takes other_id (string) and queries Simbad to obtain the TIC ID
-    
+    """
+    Queries Simbad to obtain the TIC ID corresponding to the given identifier.
+
+    Parameters:
+    - other_id (str): Identifier for which TIC ID needs to be obtained.
+
+    Returns:
+    - str: TIC ID obtained from Simbad. Returns None if no TIC ID is found.
+
+    Note:
+    This function requires the astroquery and astropy packages to be installed.
+
+    Example:
+    ```python
+    tic_id = tic_id_from_simbad('HD 12345')
+    print(tic_id)
+    ```
+    """
+    # Import necessary libraries
     from astroquery.simbad import Simbad
     import astropy
-    ID_table = Simbad.query_objectids(other_id)
-    
-    if type(ID_table) is not astropy.table.table.Table:
-        return(None)
-    
-    ID_table['ID'] = ID_table['ID'].astype(str)
-    
 
+    # Query Simbad to obtain the object IDs
+    ID_table = Simbad.query_objectids(other_id)
+
+    # Check if the result is a valid table
+    if type(ID_table) is not astropy.table.table.Table:
+        return None
+
+    # Convert the 'ID' column to string
+    ID_table['ID'] = ID_table['ID'].astype(str)
+
+    # Convert the table to a Pandas DataFrame
     ID_pandas = ID_table.to_pandas()
+
+    # Filter for TIC IDs
     tic_id = ID_pandas[ID_pandas['ID'].str.contains("TIC")]
-    
-    
+
+    # Return the TIC ID, if found
     return tic_id['ID'].values[0]
 
 
 def tic_id_from_exoplanet_archive(other_id):
+    '''
+     Parameters:
+    - other_id (str): Identifier for which the TIC ID needs to be obtained.
+
+    Returns:
+    - str: TIC ID obtained from the Exoplanet Archive. Returns None if no TIC ID is found.
+    '''
+
     # if SIMBAD can't get TIC ID, looks for it in exoplanet archive
     # most of this is from transit_info_from_exoplanet_archive tbh; hesitant to try to merge functions
     
@@ -42,11 +73,13 @@ def tic_id_from_exoplanet_archive(other_id):
     # SIMBAD should be able to grab data for already confirmed systems
     # this is primarily for TOI candidates
     
+    # Exoplanet Archive URL for TOI data
     a = "https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=toi&select=toipfx,tid,pl_tranmid,pl_orbper,pl_trandurh&format=csv"
 
+    # Read TOI data from the Exoplanet Archive
     exoplanets = pd.read_csv(a)
 
-    #rename columns
+    # Rename columns for consistency
     column_dict = {
     'toipfx':'toi_host',    
     'tid':'tic_id',
@@ -76,13 +109,24 @@ def tic_id_from_exoplanet_archive(other_id):
 
 
 def transit_info_from_exoplanet_archive(tic_id):
-    #takes TIC ID and queries exoplanet archive to return t0, period, and duration
     
+    '''
+    Queries the Exoplanet Archive to obtain transit information (t0, period, and duration) for a given TIC ID.
+
+    Parameters:
+    - tic_id (str): TIC ID for which transit information needs to be obtained.
+
+    Returns:
+    - result: DataFrame containing transit information (t0, period, and duration) for the specified TIC ID.
+      Returns an empty DataFrame if no information is found.
+
+    '''    
     import pyvo as vo
 
-
+    # Connect to the Exoplanet Archive TAP service
     service = vo.dal.TAPService("https://exoplanetarchive.ipac.caltech.edu/TAP")
     
+    # Query the planetary comparison table for transit information    
     a = service.search("SELECT \
                        tic_id, pl_tranmid, pl_orbper, pl_trandur\
                        FROM pscomppars")
@@ -94,7 +138,7 @@ def transit_info_from_exoplanet_archive(tic_id):
     exoplanets = exoplanets.to_pandas()
     
     
-    #rename columns
+    # Rename columns for consistency
     column_dict = {
     'pl_tranmid':'t0 [BJD]',
     'pl_orbper':'period [days]',
@@ -103,6 +147,7 @@ def transit_info_from_exoplanet_archive(tic_id):
     
     exoplanets.rename(columns=column_dict, inplace=True)
     
+    # Filter for the specified TIC ID
     result = exoplanets[exoplanets['tic_id'] == tic_id]
 
     #if there's no row in the planetary comparison table, check TOI table
@@ -113,7 +158,7 @@ def transit_info_from_exoplanet_archive(tic_id):
 
         exoplanets = pd.read_csv(a)
         
-        #rename columns
+        # Rename columns for consistency
         column_dict = {
         'tid':'tic_id',
         'pl_tranmid':'t0 [BJD]',
@@ -124,6 +169,7 @@ def transit_info_from_exoplanet_archive(tic_id):
         exoplanets.rename(columns=column_dict, inplace=True)
         exoplanets['tic_id'] = 'TIC ' + exoplanets['tic_id'].astype(str)
         
+        # Filter for the specified TIC ID in the TOI table
         result = exoplanets[exoplanets['tic_id'] == tic_id]
         
         
@@ -141,10 +187,24 @@ def transit_info_from_exoplanet_archive(tic_id):
 
 
 def get_transit_info(object_id):
-    #takes a id, queries Simbad to get matching TIC ID
-    #then queries exoplanet archive to extract t0, period, and duration
-    #if no Simbad match found, then returns None and prints error message
-    #if no exoplanet archive match found, then returns None and prints error message
+
+    """
+    Takes an object ID, queries Simbad to get the matching TIC ID, then queries the Exoplanet Archive
+    to extract transit information including t0, period, and duration.
+    
+    if no Simbad match found, then returns None and prints error message
+    if no exoplanet archive match found, then returns None and prints error message
+    
+    Parameters:
+    - object_id (str): Object ID for which transit information needs to be obtained.
+
+    Returns:
+    - pandas.DataFrame or str or None: Returns a DataFrame containing transit information if found.
+      Returns the TIC ID as a string if no transit information is found but a TIC ID is retrieved.
+      Returns None if neither a TIC ID nor transit information is found.
+
+    """
+    
 
     tic_id = tic_id_from_simbad(object_id)
     
@@ -187,12 +247,40 @@ def get_light_curve(object_id, flux_type, TESS = False, Kepler = False,
     
     
 
+    """
+    Obtains light curve data based on the object ID, flux type, and optional user-provided transit parameters.
 
+    Parameters:
+    - object_id (str): Object ID for which the light curve needs to be obtained.
+    - flux_type (str): Type of flux data to retrieve (e.g., 'sap_flux', 'pdcsap_flux').
+    - TESS (bool, optional): Whether the object is observed by TESS. Defaults to False.
+    - Kepler (bool, optional): Whether the object is observed by Kepler. Defaults to False.
+    - user_period (float, optional): User-provided period for the transit. Defaults to None.
+    - user_t0 (float, optional): User-provided transit midpoint. Defaults to None.
+    - user_duration (float, optional): User-provided transit duration. Defaults to None.
+    - planet_number (int, optional): Number of the planet in the system. Defaults to 1.
+    - mask_width (float, optional): Width multiplier for creating transit masks. Defaults to 1.3.
+
+    Returns:
+    - tuple: A tuple containing the light curve data:
+      - np.array: Time values (xs).
+      - np.array: Flux values (ys).
+      - np.array: Flux error values (ys_err).
+      - np.array: Transit mask (mask).
+      - np.array: Fitted planet mask (mask_fitted_planet).
+      - np.array: Transit midpoints (t0s_in_data).
+      - np.array: Transit periods (period).
+      - np.array: Transit durations (duration).
+      - list: Quarters of observation (quarters).
+      - list: Crowding information (crowding).
+      - list: Flux fraction information (flux_fraction).
+
+    """
 
     transit_info = get_transit_info(object_id)
 
 
-    print(transit_info)
+
     if transit_info is None:
         print('no TIC ID found')
         return None
@@ -213,8 +301,6 @@ def get_light_curve(object_id, flux_type, TESS = False, Kepler = False,
 
             transit_info = pd.DataFrame(transit_dic)
 
-    print(transit_info)
-    print(type(transit_info))
     
     print('NASA Exoplanet Archive planet parameters:')
     print('planet #,[    tic_id      ,    t0 [BJD]    ,  P [days] , tdur [hrs]')
@@ -309,13 +395,15 @@ def get_light_curve(object_id, flux_type, TESS = False, Kepler = False,
         
         #pull in Kepler LC
         lc_files = lk.search_lightcurve(
-            tic_id, mission='Kepler'
+            tic_id, mission='Kepler', author='Kepler'
         ).download_all(quality_bitmask="default", flux_column=flux_type)
         
     
     quarters = []
     crowding = []
     flux_fraction = []
+
+
 
     try:
         for file in lc_files:
@@ -460,82 +548,3 @@ def get_light_curve(object_id, flux_type, TESS = False, Kepler = False,
 
 
 
-def split_lc_around_transits(time, lc, lc_err, mask, mask_fitted_planet, outlier_figname, quarter_figname, star_id,
-                            cadence = None, outlier_window = None, outlier_sigma = 4):
-
-    if cadence == None:
-        cadence=determine_cadence(time)
-
-    if outlier_window == None:
-        outlier_window = 30*cadence
-    
-    time_out, flux_out, flux_err_out, mask_out, mask_fitted_planet_out, moving_median = \
-    reject_outliers_out_of_transit(time, lc, lc_err, mask, mask_fitted_planet, 30*cadence, 4)
-
-    plot_outliers(time, lc, time_out, flux_out, 
-                  moving_median, quarters_end, outlier_figname, star_id)
-    if show_plots: plt.show()
-
-    x_quarters, y_quarters, yerr_quarters, mask_quarters, mask_fitted_planet_quarters = \
-    split_around_problems(time_out, flux_out, flux_err_out, 
-                          mask_out, mask_fitted_planet_out, quarters_end)
-
-
-    plot_split_data(x_quarters, y_quarters, t0s, quarter_figname, star_id)
-    if show_plots: plt.show()
-
-    x_quarters_w_transits, y_quarters_w_transits, yerr_quarters_w_transits, \
-    mask_quarters_w_transits, mask_fitted_planet_quarters_w_transits = \
-    find_quarters_with_transits(x_quarters, y_quarters, yerr_quarters, 
-                                mask_quarters, mask_fitted_planet_quarters, t0s)
-
-
-
-
-    x_quarters_w_transits = np.concatenate(x_quarters_w_transits, axis=0, dtype=object)
-    y_quarters_w_transits = np.concatenate(y_quarters_w_transits, axis=0, dtype=object)
-    yerr_quarters_w_transits = np.concatenate(yerr_quarters_w_transits, axis=0, dtype=object)
-    mask_quarters_w_transits = np.concatenate(mask_quarters_w_transits, axis=0, dtype=object)
-    mask_fitted_planet_quarters_w_transits = np.concatenate(mask_fitted_planet_quarters_w_transits, axis=0, dtype=object)
-
-
-
-
-
-
-    mask_quarters_w_transits = np.array(mask_quarters_w_transits, dtype=bool)
-    mask_fitted_planet_quarters_w_transits = np.array(mask_fitted_planet_quarters_w_transits, dtype=bool)
-
-
-
-
-
-
-
-
-    x_transits, y_transits, yerr_transits, mask_transits, mask_fitted_planet_transits = split_around_transits(x_quarters_w_transits, 
-                                                                                                              y_quarters_w_transits, 
-                                                                                                              yerr_quarters_w_transits, 
-                                                                                                              mask_quarters_w_transits, 
-                                                                                                              mask_fitted_planet_quarters_w_transits, 
-                                                                                                              t0s, 1./2., period)
-    
-
-
-
-    if len(mask_transits)==1:
-      mask_transits = np.array(mask_transits, dtype=bool)
-      mask_fitted_planet_transits = np.array(mask_fitted_planet_transits, dtype=bool)
-
-
-    x_epochs = np.concatenate(x_transits, axis=0, dtype=object)
-    y_epochs = np.concatenate(y_transits, axis=0, dtype=object)
-    yerr_epochs = np.concatenate(yerr_transits, axis=0, dtype=object)
-    mask_epochs = np.concatenate(mask_transits, axis=0, dtype=object)
-    mask_fitted_planet_epochs = np.concatenate(mask_fitted_planet_transits, axis=0, dtype=object)
-
-
-    return x_epochs, y_epochs, yerr_epochs, mask_epochs, mask_fitted_planet_epochs
-
-
-    
