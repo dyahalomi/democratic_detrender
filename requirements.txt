@@ -1,0 +1,10 @@
+# python<=3.10, 3.11 broke with pymc3
+
+# pymc>=4
+# exoplanet[pymc]
+
+exoplanet[pymc3]
+pymc3_ext
+matplotlib
+lightkurve
+celerite2
