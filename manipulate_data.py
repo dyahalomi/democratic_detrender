@@ -74,7 +74,8 @@ def split_around_problems(x, y, yerr, mask, mask_fitted_planet, problem_times):
 def add_nans_for_missing_data(sap_x_local, sap_detrended_lcs, sap_yerr_local, sap_mask_local, sap_mask_fitted_planet_local, 
                               pdc_x_local, pdc_detrended_lcs, pdc_yerr_local, pdc_mask_local, pdc_mask_fitted_planet_local):
     
-    
+    print('')
+    print('')
     print('pdc length in: ', str(len(pdc_x_local)))
     print('sap length in: ', str(len(sap_x_local)))
     print('---')

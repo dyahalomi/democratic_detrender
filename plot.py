@@ -8,6 +8,12 @@ from matplotlib.widgets import Slider, Button
 from helper_functions import bin_data
 
 
+import matplotlib 
+matplotlib.rc('xtick', labelsize=27) 
+matplotlib.rc('ytick', labelsize=27) 
+matplotlib.rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
+matplotlib.rc('text', usetex=True)
+
 
 def plot_transit(xs_star, ys_star, xs_transit, ys_transit, t0, period, title, bin_window, object_id, problem_times_input=None, dont_bin=False):
     #xs_star = time not in transit
@@ -210,9 +216,9 @@ def plot_detrended_lc(xs, ys, detrend_labels, t0s_in_data, window, period, color
     if len(t0s_in_data) > 1:
 
         if len(ys) == 1:
-            fig, ax = plt.subplots(ncols = 5, nrows = math.ceil(len(t0s_in_data)/5), figsize = [27,len(t0s_in_data)*len(ys)], sharey=True)    
+            fig, ax = plt.subplots(ncols = 3, nrows = math.ceil(len(t0s_in_data)/3), figsize = [27,len(t0s_in_data)*len(ys)], sharey=True)    
         else:
-            fig, ax = plt.subplots(ncols = 5, nrows = math.ceil(len(t0s_in_data)/5), figsize = [27,len(t0s_in_data)*len(ys)/4], sharey=True)
+            fig, ax = plt.subplots(ncols = 3, nrows = math.ceil(len(t0s_in_data)/3), figsize = [27,len(t0s_in_data)*len(ys)/4], sharey=True)
 
     else:
         fig, ax = plt.subplots(ncols = 1, nrows = 1, figsize = [18,13], sharey=True)
@@ -322,7 +328,7 @@ def plot_detrended_lc(xs, ys, detrend_labels, t0s_in_data, window, period, color
 
             
 
-            if column == 4:
+            if column == 2:
                 column = 0
                 row += 1
             else:
@@ -439,7 +445,7 @@ def plot_split_data(x_split, y_split, t0s, figname, object_id):
 
 
     plt.close("all")
-    fig, ax = plt.subplots(nrows=len(x_split), figsize = [18,6*len(x_split)])
+    fig, ax = plt.subplots(nrows=len(x_split), figsize = [18,3*len(x_split)])
     
     if len(x_split) > 1:
         for ii in range(0, len(x_split)):
@@ -453,9 +459,9 @@ def plot_split_data(x_split, y_split, t0s, figname, object_id):
 
             ax_ii.text(xmin+(xmax-xmin)*.05, .7*np.max(y_split[ii]), 'quarter ' + str(ii), fontsize = 27)
             ax_ii.set_xlim(xmin, xmax)
-            ax_ii.set_xlabel("time [days]", fontsize = 18)
-            ax_ii.set_ylabel("intensity", fontsize = 18)
+            ax_ii.set_ylabel("intensity", fontsize = 27)
             
+        ax[len(x_split)-1].set_xlabel("time [days]", fontsize = 27)
     else:
         xmin = np.min(x_split[0])
         xmax = np.max(x_split[0])        
@@ -467,13 +473,13 @@ def plot_split_data(x_split, y_split, t0s, figname, object_id):
 
         ax_ii.text(xmin+(xmax-xmin)*.05, 0, 'quarter ' + str(0), fontsize = 27)
         ax_ii.set_xlim(xmin, xmax)
-        ax_ii.set_xlabel("time [days]", fontsize = 18)
-        ax_ii.set_ylabel("intensity", fontsize = 18)
+        ax_ii.set_xlabel("time [days]", fontsize = 27)
+        ax_ii.set_ylabel("intensity", fontsize = 27)
 
     fig.suptitle(object_id, fontsize=36)
         
     
-
+    fig.tight_layout()
     fig.savefig(figname)
 
 
@@ -526,27 +532,30 @@ def plot_individual_outliers(time, flux, time_out, flux_out, t0s, period, window
                     outlier_in_this_epoch = True
                     epochs_with_outliers.append(ii)
 
-                    
+
     if nplots > 0:
         fig, ax = plt.subplots(nrows = nplots, figsize = [18,6*nplots])
     else:
         return None
-    
+        print(figname)
+
+    #CHANGED TO FIX NOT PERMANENT MARCH 16,2024
+    plot_num = -1
     for ii in range(0, len(t0s)):
         if ii in epochs_with_outliers:
-
+            plot_num += 1
             t0 = t0s[ii]
             xmin, xmax = t0-(period*window), t0+(period*window)
 
             if nplots > 1:
-                ax[ii].plot(time_out, flux_out, 'o', color = 'grey', alpha = 0.7)
-                ax[ii].plot(outlier_times, outlier_fluxes, 'o', color = 'red', alpha = 1.)
-                ax[ii].text(xmin+(xmax-xmin)*.05, -depth*.2, 'epoch ' + str(ii+1), fontsize = 27)
-                ax[ii].set_xlim(xmin, xmax)
+                ax[plot_num].plot(time_out, flux_out, 'o', color = 'grey', alpha = 0.7)
+                ax[plot_num].plot(outlier_times, outlier_fluxes, 'o', color = 'red', alpha = 1.)
+                ax[plot_num].text(xmin+(xmax-xmin)*.05, -depth*.2, 'epoch ' + str(ii+1), fontsize = 27)
+                ax[plot_num].set_xlim(xmin, xmax)
 
 
-                ax[ii].set_xlabel("time [days]")
-                ax[ii].set_ylabel("intensity")
+                ax[plot_num].set_xlabel("time [days]")
+                ax[plot_num].set_ylabel("intensity")
             
             else:
                 ax.plot(time_out, flux_out, 'o', color = 'grey', alpha = 0.7)
@@ -561,6 +570,7 @@ def plot_individual_outliers(time, flux, time_out, flux_out, t0s, period, window
 
         
     fig.tight_layout()
+
 
     fig.savefig(figname)
     

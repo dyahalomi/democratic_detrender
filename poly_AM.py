@@ -27,8 +27,6 @@ def DurbinWatson(residuals):
 
 
 def polyAM_function(times, fluxes, degree):
-    #print(times)
-    #print(type(times))
     poly_coeffs = np.polyfit(times, fluxes, degree)
     model = np.polyval(poly_coeffs, times)
     return model
@@ -39,7 +37,7 @@ def polyAM_function(times, fluxes, degree):
 
 def polyAM_iterative(times, fluxes, mask, mask_fitted_planet, 
                      local_start_x, local_end_x, 
-                     max_degree=20, min_degree=1):
+                     max_degree=30, min_degree=1):
     ### this function utilizes polyAM_function above, iterates it up to max_degree.
     no_pre_transit = False
     no_post_transit = False
@@ -89,6 +87,7 @@ def polyAM_iterative(times, fluxes, mask, mask_fitted_planet,
             DWstat_pre_transit = 2.
             local_start_index = 0 #just for plotting
         else:
+            #print(np.where(times == local_start_x))
             local_start_index = np.where(times == local_start_x)[0][0]
             residuals_pre_transit = (((fluxes[local_start_index:in_transit_index] + 1) / \
                                     (model[local_start_index:in_transit_index] + 1)) - 1)
@@ -99,6 +98,13 @@ def polyAM_iterative(times, fluxes, mask, mask_fitted_planet,
             DWstat_post_transit = 2.
             local_end_index = len(times)-1 #just for plotting
         else:
+            #print('')
+            #print('times')
+            #print(times)
+            #print('')
+            #print('local_end_x')
+            #print(local_end_x)
+            #print('')
             local_end_index = np.where(times == local_end_x)[0][0]
             npoints_missing_from_model = out_transit_index - in_transit_index
             residuals_post_transit = (((fluxes[out_transit_index:local_end_index] + 1) / \
@@ -157,12 +163,30 @@ def polynomial_method(x, y, yerr, mask, mask_fitted_planet, t0s, duration, perio
         
         local_start_x_ii = local_x[ii][0]
         local_end_x_ii = local_x[ii][len(local_x[ii])-1]
+        '''
+        print('')
+        print('')
+        print('')
+        print('look here:')
+        print(local_x[ii])
+        print(local_start_x_ii)
+        print(local_end_x_ii)
+        print('')
+        print('')
+        print('')
+        print('')
+        '''
         
         
 
         try:
+            '''
+            print('in try:')
+            print(x_ii)
+            print('--------------')
+            '''
             poly = polyAM_iterative(x_ii, y_ii, mask_ii, mask_fitted_planet_ii,
-                                    local_start_x_ii, local_end_x_ii, max_degree=30)
+                                    local_start_x_ii, local_end_x_ii)
 
             
             poly_interp = interp1d(x_ii[~mask_ii], poly[0], bounds_error=False, fill_value='extrapolate')
@@ -174,7 +198,6 @@ def polynomial_method(x, y, yerr, mask, mask_fitted_planet, t0s, duration, perio
             poly_mod_all.extend(best_model)
             
 
-
         except:
             print('polyAM failed for the ' + str(ii) + 'th epoch')
             #gp failed for this epoch, just add nans of the same size
@@ -183,7 +206,6 @@ def polynomial_method(x, y, yerr, mask, mask_fitted_planet, t0s, duration, perio
 
             poly_mod.append(nan_array)
             poly_mod_all.extend(nan_array)
-
 
 
 

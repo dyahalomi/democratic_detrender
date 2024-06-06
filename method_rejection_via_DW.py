@@ -1,12 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import exoplanet as xo
-from scipy.interpolate import interp1d
-from matplotlib.widgets import Slider, Button
+from scipy.special import erfcinv
+
 
 
 def test_DW_per_epoch(x_detrended, y_detrended, yerr_detrended, mask_detrended, mask_fitted_planet_detrended, period, t0s, duration):
-    from scipy.special import erfcinv
     
     #break up the epochs...
     x_split, y_split, yerr_split, mask_split, mask_fitted_planet_split = \

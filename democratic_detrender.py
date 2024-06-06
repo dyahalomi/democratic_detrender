@@ -36,7 +36,7 @@ parser.add_argument('--local', default='True', help='detrend via local...True or
 parser.add_argument('--GP', default='True', help='detrend via GP...True or False')
 parser.add_argument('--use_sap_problem_times', default='False', help='use SAP problem times for PDC. True or False.')
 parser.add_argument('--no_pdc_problem_times', default='True', help='assume PDC needs no problem times.')
-
+parser.add_argument('--user_light_curve', type=str, default='NO', help='path to + filename for user input light curve.')
 
 
 args = vars(parser.parse_args())
@@ -62,6 +62,7 @@ input_GP = args['GP']
 input_local = args['local']
 input_use_sap_problem_times = args['use_sap_problem_times']
 input_no_pdc_problem_times = args['no_pdc_problem_times']
+input_user_light_curve = args['user_light_curve']
 
 
 input_detrend_methods = []
@@ -84,6 +85,10 @@ if input_no_pdc_problem_times == 'True':
     input_no_pdc_problem_times = True
 else:
     input_no_pdc_problem_times = False
+
+user_light_curve = False
+if input_user_light_curve != 'NO':
+    user_light_curve = True
 
 
 # # # ---------------------------------------------- now the fun begins ! ! ! ------------------------------------------------ # # #
@@ -193,7 +198,6 @@ if flux_type == 'both':
     #[pdc_local_detrended2, pdc_poly_detrended2, pdc_cofiam_detrended2, pdc_gp_detrended2],\
     #yerr_detrended, mask_detrended, mask_fitted_planet_detrended = \
     
-
 
     x_detrended,sap_detrend_sep_lc, pdc_detrend_sep_lc,\
     yerr_detrended, mask_detrended, mask_fitted_planet_detrended = \
