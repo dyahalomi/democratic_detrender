@@ -1,4 +1,3 @@
-
 ### Special thanks to Alex Teachey --> adapted from MoonPy package
 ### GitHub: https://github.com/alexteachey/MoonPy
 
@@ -34,11 +33,13 @@ def DurbinWatson(residuals):
     - float: Durbin-Watson statistic
     """
 
-    residual_terms = [residuals[nres + 1] - residuals[nres] for nres in range(len(residuals) - 1)]
+    residual_terms = [
+        residuals[nres + 1] - residuals[nres] for nres in range(len(residuals) - 1)
+    ]
     residual_terms = np.array(residual_terms)
-    numerator = np.nansum(residual_terms**2)
-    denominator = np.nansum(residuals**2)
-    assert denominator != 0.
+    numerator = np.nansum(residual_terms ** 2)
+    denominator = np.nansum(residuals ** 2)
+    assert denominator != 0.0
     return numerator / denominator
 
 
@@ -53,7 +54,7 @@ def cofiam_matrix_gen(times, degree):
     Returns:
     - array: design matrix for CoFiAM
     """
-    
+
     baseline = np.nanmax(times) - np.nanmin(times)
     assert baseline > 0
     rows = len(times)
@@ -82,7 +83,7 @@ def cofiam_matrix_coeffs(times, fluxes, degree):
     Returns:
     - tuple: design matrix for CoFiAM, coefficients
     """
-    
+
     assert len(times) > 0
     Xmat = cofiam_matrix_gen(times, degree)
     beta_coefs = np.linalg.lstsq(Xmat, fluxes, rcond=None)[0]
@@ -101,17 +102,26 @@ def cofiam_function(times, fluxes, degree):
     Returns:
     - array: CoFiAM function values
     """
-    
-    input_times = times.astype('f8')
-    input_fluxes = fluxes.astype('f8')
-    cofiam_matrix, cofiam_coefficients = cofiam_matrix_coeffs(input_times, input_fluxes, degree)
+
+    input_times = times.astype("f8")
+    input_fluxes = fluxes.astype("f8")
+    cofiam_matrix, cofiam_coefficients = cofiam_matrix_coeffs(
+        input_times, input_fluxes, degree
+    )
     output = np.matmul(cofiam_matrix, cofiam_coefficients)
-    return output 
+    return output
 
 
-def cofiam_iterative(times, fluxes, mask, mask_fitted_planet,
-                     local_start_x, local_end_x, 
-                     max_degree=30, min_degree=1):
+def cofiam_iterative(
+    times,
+    fluxes,
+    mask,
+    mask_fitted_planet,
+    local_start_x,
+    local_end_x,
+    max_degree=30,
+    min_degree=1,
+):
     """
     Iteratively apply CoFiAM method for multiple CoFiAM degrees and select the best fit.
 
@@ -128,15 +138,15 @@ def cofiam_iterative(times, fluxes, mask, mask_fitted_planet,
     Returns:
     - tuple: best-fit model, best degree, best Durbin-Watson statistic, maximum degree
     """
-    
+
     no_pre_transit = False
     no_post_transit = False
-    
+
     vals_to_minimize = []
     models = []
     degs_to_try = np.arange(min_degree, max_degree + 1, 1)
     DWstats = []
-    
+
     in_transit = False
     out_transit = True
 
@@ -169,23 +179,35 @@ def cofiam_iterative(times, fluxes, mask, mask_fitted_planet,
     for deg in degs_to_try:
         model = cofiam_function(times[~mask], fluxes[~mask], deg)
         if no_pre_transit:
-            DWstat_pre_transit = 2.
+            DWstat_pre_transit = 2.0
         else:
             local_start_index = np.where(times == local_start_x)[0][0]
-            residuals_pre_transit = (((fluxes[local_start_index:in_transit_index] + 1) /
-                                      (model[local_start_index:in_transit_index] + 1)) - 1)
+            residuals_pre_transit = (
+                (fluxes[local_start_index:in_transit_index] + 1)
+                / (model[local_start_index:in_transit_index] + 1)
+            ) - 1
             DWstat_pre_transit = DurbinWatson(residuals_pre_transit)
 
         if no_post_transit:
-            DWstat_post_transit = 2.
+            DWstat_post_transit = 2.0
         else:
             local_end_index = np.where(times == local_end_x)[0][0]
             npoints_missing_from_model = out_transit_index - in_transit_index
-            residuals_post_transit = (((fluxes[out_transit_index:local_end_index] + 1) /
-                                       (model[out_transit_index - npoints_missing_from_model:local_end_index -
-                                              npoints_missing_from_model] + 1)) - 1)
+            residuals_post_transit = (
+                (fluxes[out_transit_index:local_end_index] + 1)
+                / (
+                    model[
+                        out_transit_index
+                        - npoints_missing_from_model : local_end_index
+                        - npoints_missing_from_model
+                    ]
+                    + 1
+                )
+            ) - 1
             DWstat_post_transit = DurbinWatson(residuals_post_transit)
-        val_to_minimize = np.sqrt((DWstat_pre_transit - 2.)**2. + (DWstat_post_transit - 2.)**2.)
+        val_to_minimize = np.sqrt(
+            (DWstat_pre_transit - 2.0) ** 2.0 + (DWstat_post_transit - 2.0) ** 2.0
+        )
         vals_to_minimize.append(val_to_minimize)
         models.append(model)
 
@@ -239,30 +261,30 @@ def cofiam_method(x, y, yerr, mask, mask_fitted_planet, t0s, duration, period, l
         local_start_x_ii = local_x[ii][0]
         local_end_x_ii = local_x[ii][len(local_x[ii]) - 1]
 
-
         try:
 
-            cofiam = cofiam_iterative(x_ii, y_ii, mask_ii, mask_fitted_planet_ii,
-                                      local_start_x_ii, local_end_x_ii, max_degree=30)
+            cofiam = cofiam_iterative(
+                x_ii,
+                y_ii,
+                mask_ii,
+                mask_fitted_planet_ii,
+                local_start_x_ii,
+                local_end_x_ii,
+                max_degree=30,
+            )
 
-
-
-
-
-            cofiam_interp = interp1d(x_ii[~mask_ii], cofiam[0], bounds_error=False, fill_value='extrapolate')
+            cofiam_interp = interp1d(
+                x_ii[~mask_ii], cofiam[0], bounds_error=False, fill_value="extrapolate"
+            )
             best_model = cofiam_interp(x_ii)
-
-
-
 
             DWs.append(cofiam[2])
 
             cofiam_mod.append(best_model)
             cofiam_mod_all.extend(best_model)
 
-        
         except:
-            print('CoFiAM failed for the ' + str(ii) + 'th epoch')
+            print("CoFiAM failed for the " + str(ii) + "th epoch")
             # CoFiAM failed for this epoch, just add nans of the same size
             nan_array = np.empty(np.shape(y_ii))
             nan_array[:] = np.nan
@@ -275,17 +297,26 @@ def cofiam_method(x, y, yerr, mask, mask_fitted_planet, t0s, duration, period, l
         yerr_all.extend(yerr_ii)
         mask_all.extend(mask_ii)
         mask_fitted_planet_all.extend(mask_fitted_planet_ii)
-        
-        
+
     # zoom into the local region of each transit
-    x_out, y_out, yerr_out, \
-    mask_out, mask_fitted_planet_out, model_out = split_around_transits(np.array(x_all),
-                                                                        np.array(y_all),
-                                                                        np.array(yerr_all),
-                                                                        np.array(mask_all),
-                                                                        np.array(mask_fitted_planet_all),
-                                                                        t0s, float(6 * duration / (24.)) / period,
-                                                                        period, model=np.array(cofiam_mod_all))
+    (
+        x_out,
+        y_out,
+        yerr_out,
+        mask_out,
+        mask_fitted_planet_out,
+        model_out,
+    ) = split_around_transits(
+        np.array(x_all),
+        np.array(y_all),
+        np.array(yerr_all),
+        np.array(mask_all),
+        np.array(mask_fitted_planet_all),
+        t0s,
+        float(6 * duration / (24.0)) / period,
+        period,
+        model=np.array(cofiam_mod_all),
+    )
 
     # add a linear polynomial fit at the end
     model_linear = []
@@ -301,7 +332,9 @@ def cofiam_method(x, y, yerr, mask, mask_fitted_planet, t0s, duration, period, l
             y_ii_detrended = get_detrended_lc(y_ii, model_ii)
 
             linear_ii = polyAM_function(x_ii[~mask_ii], y_ii_detrended[~mask_ii], 1)
-            poly_interp = interp1d(x_ii[~mask_ii], linear_ii, bounds_error=False, fill_value='extrapolate')
+            poly_interp = interp1d(
+                x_ii[~mask_ii], linear_ii, bounds_error=False, fill_value="extrapolate"
+            )
             model_ii_linear = poly_interp(x_ii)
 
             model_linear.append(model_ii_linear)
@@ -309,16 +342,14 @@ def cofiam_method(x, y, yerr, mask, mask_fitted_planet, t0s, duration, period, l
             y_ii_linear_detrended = get_detrended_lc(y_ii_detrended, model_ii_linear)
             y_out_detrended.append(y_ii_linear_detrended)
 
-
         except:
-            print('CofiAM failed for the ' + str(ii) + 'th epoch')
+            print("CofiAM failed for the " + str(ii) + "th epoch")
             # CoFiAM failed for this epoch, just add nans of the same size
             nan_array = np.empty(np.shape(y_ii))
             nan_array[:] = np.nan
 
             y_out_detrended.append(nan_array)
-        
+
     detrended_lc = np.concatenate(y_out_detrended, axis=0)
 
     return detrended_lc, DWs
-
