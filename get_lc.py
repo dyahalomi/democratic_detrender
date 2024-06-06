@@ -262,7 +262,6 @@ def get_light_curve(object_id, flux_type, TESS = False, Kepler = False,
     - mask_width (float, optional): Width multiplier for creating transit masks. Defaults to 1.3.
     - user_light_curve (string, optional): figure name of the user light curve. Defaults to 'NO'.
 
-
     Returns:
     - tuple: A tuple containing the light curve data:
       - np.array: Time values (xs).
