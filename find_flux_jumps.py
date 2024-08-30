@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import exoplanet as xo
 from scipy.interpolate import interp1d
 from matplotlib.widgets import Slider, Button
+import ast
+
 
 
 # print(f"exoplanet.__version__ = '{xo.__version__}'")
@@ -32,6 +34,7 @@ def find_flux_jumps(
     dont_bin=False,
     data_name=None,
     problem_times_default=None,
+    user_light_curve='NO'
 ):
 
     """
@@ -54,6 +57,8 @@ def find_flux_jumps(
     - dont_bin (bool, optional, default=False): Flag indicating whether to skip binning.
     - data_name (str, optional): Name of the data source.
     - problem_times_default (str, optional): Default problem times source.
+    - user_light_curve (string, optional): path to folder with user light curve. Default: NO.
+
 
     Returns:
     Tuple containing the necessary data for further analysis:
@@ -67,32 +72,56 @@ def find_flux_jumps(
     - period (float): Planet period.
     - duration (float): Transit duration.
     - cadence (float): Cadence of observations.
+
     """
 
-    # pull in light curve
-    (
-        time,
-        lc,
-        lc_err,
-        mask,
-        mask_fitted_planet,
-        t0s,
-        period,
-        duration,
-        quarters,
-        crowding,
-        flux_fraction,
-    ) = get_light_curve(
-        star_id,
-        flux_type,
-        TESS,
-        Kepler,
-        user_periods,
-        user_t0s,
-        user_durations,
-        planet_number,
-        mask_width,
-    )
+    if user_light_curve == 'NO':
+        # pull in light curve
+        (
+            time,
+            lc,
+            lc_err,
+            mask,
+            mask_fitted_planet,
+            t0s,
+            period,
+            duration,
+            quarters,
+            crowding,
+            flux_fraction,
+        ) = get_light_curve(
+            star_id,
+            flux_type,
+            TESS,
+            Kepler,
+            user_periods,
+            user_t0s,
+            user_durations,
+            planet_number,
+            mask_width,
+        )
+
+    else:
+        #pull in the user light curve and metadata
+        # Load the CSV files into DataFrames
+        print('LOADING USER LIGHT CURVE and METDATA FROM LOCAL DIRECTORY: ' + user_light_curve)
+        lc_df = pd.read_csv(user_light_curve+'lc.csv')
+        lc_metadata = pd.read_csv(user_light_curve+'lc_metadata.csv')
+        orbital_data = pd.read_csv(user_light_curve+'orbital_data.csv')
+        t0s_output = pd.read_csv(user_light_curve+'t0s_output.csv')
+
+
+        time = lc_df['xs'].values
+        lc = lc_df['ys'].values
+        lc_err = lc_df['ys_err'].values
+        mask = lc_df['mask'].values
+        mask_fitted_planet = lc_df['mask_fitted_planet'].values
+        t0s = t0s_output['t0s_in_data'].values
+        period = orbital_data['period'].values[0]
+        duration = orbital_data['duration'].values[0]
+        quarters = list(lc_metadata['quarters'].apply(ast.literal_eval).values)
+        crowding = list(lc_metadata['crowding'].values)
+        flux_fraction = list(lc_metadata['flux_fraction'].values)
 
     # determine cadence of observation
     cadence = determine_cadence(time)
@@ -295,6 +324,7 @@ def find_sap_and_pdc_flux_jumps(
     data_name=None,
     problem_times_default=None,
     no_pdc_problem_times=True,
+    user_light_curve='NO'
 ):
 
     """
@@ -315,6 +345,8 @@ def find_sap_and_pdc_flux_jumps(
     - data_name (str, optional): Name of the data source.
     - problem_times_default (str, optional): Default problem times source.
     - no_pdc_problem_times (bool, optional, default=True): Flag indicating whether PDC flux has no problem times.
+    - user_light_curve (string, optional): path to folder with user light curve. Default: NO.
+
 
     Returns:
     Tuple containing the necessary data for further analysis for SAP flux:
@@ -348,6 +380,7 @@ def find_sap_and_pdc_flux_jumps(
         data_name=data_name,
         problem_times_default=problem_times_default,
         no_pdc_problem_times=no_pdc_problem_times,
+        user_light_curve=user_light_curve
     )
 
     pdc_vals = find_flux_jumps(
@@ -366,6 +399,7 @@ def find_sap_and_pdc_flux_jumps(
         data_name=data_name,
         problem_times_default=problem_times_default,
         no_pdc_problem_times=no_pdc_problem_times,
+        user_light_curve=user_light_curve
     )
 
     return sap_vals, pdc_vals

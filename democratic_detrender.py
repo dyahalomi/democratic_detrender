@@ -102,8 +102,8 @@ parser.add_argument(
 parser.add_argument(
     "--user_light_curve",
     type=str,
-    default="NO",
-    help="path to + filename for user input light curve.",
+    default='NO',
+    help="path to directory with user input light curve and metadata.",
 )
 
 
@@ -154,9 +154,6 @@ if input_no_pdc_problem_times == "True":
 else:
     input_no_pdc_problem_times = False
 
-user_light_curve = False
-if input_user_light_curve != "NO":
-    user_light_curve = True
 
 
 # # # ---------------------------------------------- now the fun begins ! ! ! ------------------------------------------------ # # #
@@ -275,6 +272,7 @@ if flux_type == "both":
         dont_bin=input_dont_bin,
         problem_times_default=input_problem_times_default,
         no_pdc_problem_times=input_no_pdc_problem_times,
+        user_light_curve=input_user_light_curve
     )
 
     # now for detrending!
@@ -479,6 +477,7 @@ elif flux_type == "pdc":
         no_pdc_problem_times=input_no_pdc_problem_times,
         dont_bin=input_dont_bin,
         problem_times_default=input_problem_times_default,
+        user_light_curve=input_user_light_curve
     )
 
     # now for detrending!
@@ -643,6 +642,7 @@ elif flux_type == "sap":
         user_durations=input_duration,
         mask_width=input_mask_width,
         dont_bin=input_dont_bin,
+        user_light_curve=input_user_light_curve
     )
 
     # now for detrending!

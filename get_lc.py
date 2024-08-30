@@ -235,7 +235,6 @@ def get_light_curve(
     user_duration=None,
     planet_number=1,
     mask_width=1.3,
-    user_light_curve="NO",
 ):
 
     """
@@ -251,7 +250,6 @@ def get_light_curve(
     - user_duration (float, optional): User-provided transit duration. Defaults to None.
     - planet_number (int, optional): Number of the planet in the system. Defaults to 1.
     - mask_width (float, optional): Width multiplier for creating transit masks. Defaults to 1.3.
-    - user_light_curve (string, optional): figure name of the user light curve. Defaults to 'NO'.
 
     Returns:
     - tuple: A tuple containing the light curve data:
