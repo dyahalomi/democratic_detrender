@@ -5,8 +5,8 @@ from scipy.interpolate import interp1d
 from matplotlib.widgets import Slider, Button
 import pandas as pd
 
-from .helper_functions import find_nearest
-from .helper_functions import determine_cadence
+from democratic_detrender.helper_functions import find_nearest
+from democratic_detrender.helper_functions import determine_cadence
 
 import math
 import lightkurve as lk
@@ -17,21 +17,20 @@ def tic_id_from_simbad(other_id):
     """
     Queries Simbad to obtain the TIC ID corresponding to the given identifier.
 
+    Note: This function requires the astroquery and astropy packages to be installed.
+
     Parameters:
-    - other_id (str): Identifier for which TIC ID needs to be obtained.
+        other_id (str): Identifier for which TIC ID needs to be obtained.
 
     Returns:
-    - str: TIC ID obtained from Simbad. Returns None if no TIC ID is found.
+        str: TIC ID obtained from Simbad. Returns None if no TIC ID is found.
 
-    Note:
-    This function requires the astroquery and astropy packages to be installed.
+    Examples:
+        >>> tic_id = tic_id_from_simbad('HD 12345')
+        >>> print(tic_id)
 
-    Example:
-    ```python
-    tic_id = tic_id_from_simbad('HD 12345')
-    print(tic_id)
-    ```
     """
+
     # Import necessary libraries
     from astroquery.simbad import Simbad
     import astropy
@@ -58,11 +57,11 @@ def tic_id_from_simbad(other_id):
 
 def tic_id_from_exoplanet_archive(other_id):
     """
-     Parameters:
-    - other_id (str): Identifier for which the TIC ID needs to be obtained.
+    Parameters:
+        other_id (str): Identifier for which the TIC ID needs to be obtained.
 
     Returns:
-    - str: TIC ID obtained from the Exoplanet Archive. Returns None if no TIC ID is found.
+        str: TIC ID obtained from the Exoplanet Archive. Returns None if no TIC ID is found.
     """
 
     # if SIMBAD can't get TIC ID, looks for it in exoplanet archive
@@ -107,11 +106,11 @@ def transit_info_from_exoplanet_archive(tic_id):
     Queries the Exoplanet Archive to obtain transit information (t0, period, and duration) for a given TIC ID.
 
     Parameters:
-    - tic_id (str): TIC ID for which transit information needs to be obtained.
+        tic_id (str): TIC ID for which transit information needs to be obtained.
 
     Returns:
-    - result: DataFrame containing transit information (t0, period, and duration) for the specified TIC ID.
-      Returns an empty DataFrame if no information is found.
+        result: DataFrame containing transit information (t0, period, and duration) for the specified TIC ID.
+        Returns an empty DataFrame if no information is found.
 
     """
     import pyvo as vo
@@ -181,12 +180,13 @@ def get_transit_info(object_id):
     if no exoplanet archive match found, then returns None and prints error message
     
     Parameters:
-    - object_id (str): Object ID for which transit information needs to be obtained.
+        object_id (str): Object ID for which transit information needs to be obtained.
 
     Returns:
-    - pandas.DataFrame or str or None: Returns a DataFrame containing transit information if found.
-      Returns the TIC ID as a string if no transit information is found but a TIC ID is retrieved.
-      Returns None if neither a TIC ID nor transit information is found.
+        pandas.DataFrame or str or None:
+            Returns a DataFrame containing transit information if found.
+            Returns the TIC ID as a string if no transit information is found but a TIC ID is retrieved.
+            Returns None if neither a TIC ID nor transit information is found.
 
     """
 
@@ -236,34 +236,33 @@ def get_light_curve(
     planet_number=1,
     mask_width=1.3,
 ):
-
     """
     Obtains light curve data based on the object ID, flux type, and optional user-provided transit parameters.
 
     Parameters:
-    - object_id (str): Object ID for which the light curve needs to be obtained.
-    - flux_type (str): Type of flux data to retrieve (e.g., 'sap_flux', 'pdcsap_flux').
-    - TESS (bool, optional): Whether the object is observed by TESS. Defaults to False.
-    - Kepler (bool, optional): Whether the object is observed by Kepler. Defaults to False.
-    - user_period (float, optional): User-provided period for the transit. Defaults to None.
-    - user_t0 (float, optional): User-provided transit midpoint. Defaults to None.
-    - user_duration (float, optional): User-provided transit duration. Defaults to None.
-    - planet_number (int, optional): Number of the planet in the system. Defaults to 1.
-    - mask_width (float, optional): Width multiplier for creating transit masks. Defaults to 1.3.
+        object_id (str): Object ID for which the light curve needs to be obtained.
+        flux_type (str): Type of flux data to retrieve (e.g., 'sap_flux', 'pdcsap_flux').
+        TESS (bool, optional): Whether the object is observed by TESS. Defaults to False.
+        Kepler (bool, optional): Whether the object is observed by Kepler. Defaults to False.
+        user_period (float, optional): User-provided period for the transit. Defaults to None.
+        user_t0 (float, optional): User-provided transit midpoint. Defaults to None.
+        user_duration (float, optional): User-provided transit duration. Defaults to None.
+        planet_number (int, optional): Number of the planet in the system. Defaults to 1.
+        mask_width (float, optional): Width multiplier for creating transit masks. Defaults to 1.3.
 
     Returns:
-    - tuple: A tuple containing the light curve data:
-      - np.array: Time values (xs).
-      - np.array: Flux values (ys).
-      - np.array: Flux error values (ys_err).
-      - np.array: Transit mask (mask).
-      - np.array: Fitted planet mask (mask_fitted_planet).
-      - np.array: Transit midpoints (t0s_in_data).
-      - np.array: Transit periods (period).
-      - np.array: Transit durations (duration).
-      - list: Quarters of observation (quarters).
-      - list: Crowding information (crowding).
-      - list: Flux fraction information (flux_fraction).
+        tuple: A tuple containing the light curve data:
+            np.array: Time values (xs).
+            np.array: Flux values (ys).
+            np.array: Flux error values (ys_err).
+            np.array: Transit mask (mask).
+            np.array: Fitted planet mask (mask_fitted_planet).
+            np.array: Transit midpoints (t0s_in_data).
+            np.array: Transit periods (period).
+            np.array: Transit durations (duration).
+            list: Quarters of observation (quarters).
+            list: Crowding information (crowding).
+            list: Flux fraction information (flux_fraction).
 
     """
 

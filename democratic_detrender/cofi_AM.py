@@ -17,9 +17,9 @@ from scipy.linalg import lstsq
 from scipy.stats import median_absolute_deviation
 from scipy import optimize
 
-from .manipulate_data import *
-from .helper_functions import *
-from .poly_AM import *
+from democratic_detrender.manipulate_data import *
+from democratic_detrender.helper_functions import *
+from democratic_detrender.poly_AM import *
 
 
 def DurbinWatson(residuals):
@@ -27,10 +27,10 @@ def DurbinWatson(residuals):
     Calculate the Durbin-Watson statistic for a given set of residuals.
 
     Parameters:
-    - residuals: array-like, residuals from a model
+        residuals: array-like, residuals from a model
 
     Returns:
-    - float: Durbin-Watson statistic
+        float: Durbin-Watson statistic
     """
 
     residual_terms = [
@@ -48,11 +48,11 @@ def cofiam_matrix_gen(times, degree):
     Generate the design matrix for the CoFiAM method.
 
     Parameters:
-    - times: array-like, time values
-    - degree: int, degree of the CoFiAM fit
+        times: array-like, time values
+        degree: int, degree of the CoFiAM fit
 
     Returns:
-    - array: design matrix for CoFiAM
+        array: design matrix for CoFiAM
     """
 
     baseline = np.nanmax(times) - np.nanmin(times)
@@ -76,12 +76,12 @@ def cofiam_matrix_coeffs(times, fluxes, degree):
     Calculate the coefficients for the CoFiAM method.
 
     Parameters:
-    - times: array-like, time values
-    - fluxes: array-like, flux values
-    - degree: int, degree of the CoFiAM fit
+        times: array-like, time values
+        fluxes: array-like, flux values
+        degree: int, degree of the CoFiAM fit
 
     Returns:
-    - tuple: design matrix for CoFiAM, coefficients
+        tuple: design matrix for CoFiAM, coefficients
     """
 
     assert len(times) > 0
@@ -95,12 +95,12 @@ def cofiam_function(times, fluxes, degree):
     Calculate the CoFiAM function.
 
     Parameters:
-    - times: array-like, time values
-    - fluxes: array-like, flux values
-    - degree: int, degree of the CoFiAM fit
+        times: array-like, time values
+        fluxes: array-like, flux values
+        degree: int, degree of the CoFiAM fit
 
     Returns:
-    - array: CoFiAM function values
+        array: CoFiAM function values
     """
 
     input_times = times.astype("f8")
@@ -126,17 +126,17 @@ def cofiam_iterative(
     Iteratively apply CoFiAM method for multiple CoFiAM degrees and select the best fit.
 
     Parameters:
-    - times: array-like, time values
-    - fluxes: array-like, flux values
-    - mask: array-like, boolean mask for data points
-    - mask_fitted_planet: array-like, boolean mask for fitted planet
-    - local_start_x: float, start time for local region
-    - local_end_x: float, end time for local region
-    - max_degree: int, maximum CoFiAM degree to try
-    - min_degree: int, minimum CoFiAM degree to try
+        times: array-like, time values
+        fluxes: array-like, flux values
+        mask: array-like, boolean mask for data points
+        mask_fitted_planet: array-like, boolean mask for fitted planet
+        local_start_x: float, start time for local region
+        local_end_x: float, end time for local region
+        max_degree: int, maximum CoFiAM degree to try
+        min_degree: int, minimum CoFiAM degree to try
 
     Returns:
-    - tuple: best-fit model, best degree, best Durbin-Watson statistic, maximum degree
+        tuple: best-fit model, best degree, best Durbin-Watson statistic, maximum degree
     """
 
     no_pre_transit = False
@@ -223,19 +223,18 @@ def cofiam_method(x, y, yerr, mask, mask_fitted_planet, t0s, duration, period, l
     Apply the CoFiAM method for detrending a light curve.
 
     Parameters:
-    - x: array-like, time values
-    - y: array-like, flux values
-    - yerr: array-like, flux error values
-        - yerr: array-like, flux error values
-    - mask: array-like, boolean mask for data points
-    - mask_fitted_planet: array-like, boolean mask for fitted planet
-    - t0s: array-like, transit center times
-    - duration: float, transit duration
-    - period: float, transit period
-    - local_x: array-like, local region times for each epoch
+        x: array-like, time values
+        y: array-like, flux values
+        yerr: array-like, flux error values
+        mask: array-like, boolean mask for data points
+        mask_fitted_planet: array-like, boolean mask for fitted planet
+        t0s: array-like, transit center times
+        duration: float, transit duration
+        period: float, transit period
+        local_x: array-like, local region times for each epoch
 
     Returns:
-    - tuple: detrended light curve, Durbin-Watson statistics
+        tuple: detrended light curve, Durbin-Watson statistics
     """
 
     from scipy.interpolate import interp1d
