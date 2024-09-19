@@ -5,8 +5,8 @@ from scipy.interpolate import interp1d
 from matplotlib.widgets import Slider, Button
 import pandas as pd
 
-from helper_functions import find_nearest
-from helper_functions import determine_cadence
+from .helper_functions import find_nearest
+from .helper_functions import determine_cadence
 
 import math
 import lightkurve as lk

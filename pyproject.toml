@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "democratic_detrender"
+version = "0.0.1"
+requires-python = "<3.11"
+dependencies = [
+    "exoplanet[pymc3]",
+    "pymc3_ext",
+    "matplotlib",
+    "lightkurve",
+    "celerite2",
+    # "numpy<2",
+    "ipykernel",
+]
+authors = [
+    {name = "Daniel Yahalomi"},
+]
+license = {text = "MIT"}
+keywords = ["astronomy", "exoplanets"]
+description = "An ensemble-based approach to removing nuisance signals from stellar time-series photometry."
+readme = "README.md"
+classifiers = [
+  "Programming Language :: Python",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Astronomy"
+]
+
+[project.urls]
+Homepage = "https://github.com/dyahalomi/democratic_detrender"
+# Documentation = "https://squishyplanet.readthedocs.io/en/latest/"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["democratic_detrender"]
