@@ -17,9 +17,9 @@ from scipy.linalg import lstsq
 from scipy.stats import median_absolute_deviation
 from scipy import optimize
 
-from manipulate_data import *
-from helper_functions import *
-from poly_AM import *
+from .manipulate_data import *
+from .helper_functions import *
+from .poly_AM import *
 
 
 def DurbinWatson(residuals):

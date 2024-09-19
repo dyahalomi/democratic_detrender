@@ -4,7 +4,7 @@ import exoplanet as xo
 from scipy.interpolate import interp1d
 from matplotlib.widgets import Slider, Button
 
-from helper_functions import find_nearest
+from .helper_functions import find_nearest
 
 
 def split_around_problems(x, y, yerr, mask, mask_fitted_planet, problem_times):

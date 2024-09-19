@@ -11,11 +11,11 @@ import ast
 
 # print(f"exoplanet.__version__ = '{xo.__version__}'")
 
-from get_lc import *
-from helper_functions import *
-from outlier_rejection import *
-from manipulate_data import *
-from plot import *
+from .get_lc import *
+from .helper_functions import *
+from .outlier_rejection import *
+from .manipulate_data import *
+from .plot import *
 
 
 def find_flux_jumps(

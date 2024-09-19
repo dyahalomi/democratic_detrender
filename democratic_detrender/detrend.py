@@ -1,13 +1,13 @@
 import numpy as np
 import time
 
-from cofi_AM import *
-from poly_AM import *
-from poly_local import *
-from gp import *
-from plot import plot_individual_outliers
-from manipulate_data import *
-from outlier_rejection import *
+from .cofi_AM import *
+from .poly_AM import *
+from .poly_local import *
+from .gp import *
+from .plot import plot_individual_outliers
+from .manipulate_data import *
+from .outlier_rejection import *
 
 
 def trim_jump_times(x, y, yerr, mask, mask_fitted_planet, t0s, period, jump_times):
