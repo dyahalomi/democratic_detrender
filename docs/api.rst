@@ -2,6 +2,7 @@
    :maxdepth: 2
    :caption: API Documentation
 
+   cofi_AM
    find_flux_jumps
    get_lc
    gp
