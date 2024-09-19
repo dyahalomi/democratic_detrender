@@ -64,8 +64,8 @@ html_theme_options = {
     "show_prev_next": False,
     "logo": {
         "text": "democratic detrender",
-        "image_light": "_static/logo_placeholder.avif",
-        "image_dark": "_static/logo_placeholder.avif",
+        "image_light": "_static/democratic_detrender_logo_final.png",
+        "image_dark": "_static/democratic_detrender_logo_final.png",
     },
 }
 
