@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 import exoplanet as xo
 from scipy.interpolate import interp1d
 from matplotlib.widgets import Slider, Button
-from .manipulate_data import *
-from .helper_functions import *
-from .poly_AM import *
+from democratic_detrender.manipulate_data import *
+from democratic_detrender.helper_functions import *
+from democratic_detrender.poly_AM import *
 
 import pymc3 as pm
 import pymc3_ext as pmx

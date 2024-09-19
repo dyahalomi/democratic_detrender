@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import exoplanet as xo
 from scipy.interpolate import interp1d
 from matplotlib.widgets import Slider, Button
-from .helper_functions import *
-from .manipulate_data import split_around_transits
+from democratic_detrender.helper_functions import *
+from democratic_detrender.manipulate_data import split_around_transits
 
 
 def DurbinWatson(residuals):

@@ -11,11 +11,11 @@ import ast
 
 # print(f"exoplanet.__version__ = '{xo.__version__}'")
 
-from .get_lc import *
-from .helper_functions import *
-from .outlier_rejection import *
-from .manipulate_data import *
-from .plot import *
+from democratic_detrender.get_lc import *
+from democratic_detrender.helper_functions import *
+from democratic_detrender.outlier_rejection import *
+from democratic_detrender.manipulate_data import *
+from democratic_detrender.plot import *
 
 
 def find_flux_jumps(
@@ -42,36 +42,36 @@ def find_flux_jumps(
     in a light curve and return the necessary data for further analysis.
 
     Parameters:
-    - star_id (str): Identifier for the star.
-    - flux_type (str): Type of flux data (e.g., 'pdcsap_flux' or 'sap_flux').
-    - save_to_directory (str): Directory path to save plots.
-    - show_plots (bool): Whether to display plots.
-    - TESS (bool, optional, default=False): Flag indicating whether TESS data is used.
-    - Kepler (bool, optional, default=False): Flag indicating whether Kepler data is used.
-    - user_periods (list, optional): List of user-defined planet periods.
-    - user_t0s (list, optional): List of user-defined midtransit times.
-    - user_durations (list, optional): List of user-defined transit durations.
-    - planet_number (int, optional, default=1): Number of the planet being analyzed.
-    - mask_width (float, optional, default=1.3): Width of the transit mask.
-    - no_pdc_problem_times (bool, optional, default=True): Flag indicating whether PDC flux has no problem times.
-    - dont_bin (bool, optional, default=False): Flag indicating whether to skip binning.
-    - data_name (str, optional): Name of the data source.
-    - problem_times_default (str, optional): Default problem times source.
-    - user_light_curve (string, optional): path to folder with user light curve. Default: NO.
+        star_id (str): Identifier for the star.
+        flux_type (str): Type of flux data (e.g., 'pdcsap_flux' or 'sap_flux').
+        save_to_directory (str): Directory path to save plots.
+        show_plots (bool): Whether to display plots.
+        TESS (bool, optional, default=False): Flag indicating whether TESS data is used.
+        Kepler (bool, optional, default=False): Flag indicating whether Kepler data is used.
+        user_periods (list, optional): List of user-defined planet periods.
+        user_t0s (list, optional): List of user-defined midtransit times.
+        user_durations (list, optional): List of user-defined transit durations.
+        planet_number (int, optional, default=1): Number of the planet being analyzed.
+        mask_width (float, optional, default=1.3): Width of the transit mask.
+        no_pdc_problem_times (bool, optional, default=True): Flag indicating whether PDC flux has no problem times.
+        dont_bin (bool, optional, default=False): Flag indicating whether to skip binning.
+        data_name (str, optional): Name of the data source.
+        problem_times_default (str, optional): Default problem times source.
+        user_light_curve (string, optional): path to folder with user light curve. Default: NO.
 
 
     Returns:
-    Tuple containing the necessary data for further analysis:
-    - x_epochs (array): Array of time values for each epoch.
-    - y_epochs (array): Array of flux values for each epoch.
-    - yerr_epochs (array): Array of flux error values for each epoch.
-    - mask_epochs (array): Array of mask values for each epoch.
-    - mask_fitted_planet_epochs (array): Array of mask values for each fitted planet epoch.
-    - problem_times (list): List of jump times to trim structured noise.
-    - t0s (list): List of midtransit times.
-    - period (float): Planet period.
-    - duration (float): Transit duration.
-    - cadence (float): Cadence of observations.
+        Tuple containing the necessary data for further analysis:
+            x_epochs (array): Array of time values for each epoch.
+            y_epochs (array): Array of flux values for each epoch.
+            yerr_epochs (array): Array of flux error values for each epoch.
+            mask_epochs (array): Array of mask values for each epoch.
+            mask_fitted_planet_epochs (array): Array of mask values for each fitted planet epoch.
+            problem_times (list): List of jump times to trim structured noise.
+            t0s (list): List of midtransit times.
+            period (float): Planet period.
+            duration (float): Transit duration.
+            cadence (float): Cadence of observations.
 
     """
 
@@ -331,37 +331,37 @@ def find_sap_and_pdc_flux_jumps(
     Wrapper to identify flux jumps in both SAP and PDC flux data and return the necessary data for further analysis.
 
     Parameters:
-    - star_id (str): Identifier for the star.
-    - save_to_directory (str): Directory path to save plots.
-    - show_plots (bool): Whether to display plots.
-    - TESS (bool, optional, default=False): Flag indicating whether TESS data is used.
-    - Kepler (bool, optional, default=False): Flag indicating whether Kepler data is used.
-    - user_periods (list, optional): List of user-defined planet periods.
-    - user_t0s (list, optional): List of user-defined midtransit times.
-    - user_durations (list, optional): List of user-defined transit durations.
-    - planet_number (int, optional, default=1): Number of the planet being analyzed.
-    - mask_width (float, optional, default=1.3): Width of the mask.
-    - dont_bin (bool, optional, default=False): Flag indicating whether to skip binning.
-    - data_name (str, optional): Name of the data source.
-    - problem_times_default (str, optional): Default problem times source.
-    - no_pdc_problem_times (bool, optional, default=True): Flag indicating whether PDC flux has no problem times.
-    - user_light_curve (string, optional): path to folder with user light curve. Default: NO.
+        star_id (str): Identifier for the star.
+        save_to_directory (str): Directory path to save plots.
+        show_plots (bool): Whether to display plots.
+        TESS (bool, optional, default=False): Flag indicating whether TESS data is used.
+        Kepler (bool, optional, default=False): Flag indicating whether Kepler data is used.
+        user_periods (list, optional): List of user-defined planet periods.
+        user_t0s (list, optional): List of user-defined midtransit times.
+        user_durations (list, optional): List of user-defined transit durations.
+        planet_number (int, optional, default=1): Number of the planet being analyzed.
+        mask_width (float, optional, default=1.3): Width of the mask.
+        dont_bin (bool, optional, default=False): Flag indicating whether to skip binning.
+        data_name (str, optional): Name of the data source.
+        problem_times_default (str, optional): Default problem times source.
+        no_pdc_problem_times (bool, optional, default=True): Flag indicating whether PDC flux has no problem times.
+        user_light_curve (string, optional): path to folder with user light curve. Default: NO.
 
 
     Returns:
-    Tuple containing the necessary data for further analysis for SAP flux:
-    - x_epochs_sap (array): Array of time values for each SAP epoch.
-    - y_epochs_sap (array): Array of flux values for each SAP epoch.
-    - yerr_epochs_sap (array): Array of flux error values for each SAP epoch.
-    - mask_epochs_sap (array): Array of mask values for each SAP epoch.
-    - mask_fitted_planet_epochs_sap (array): Array of mask values for each fitted planet epoch in SAP flux.
+        Tuple containing the necessary data for further analysis for SAP flux:
+            x_epochs_sap (array): Array of time values for each SAP epoch.
+            y_epochs_sap (array): Array of flux values for each SAP epoch.
+            yerr_epochs_sap (array): Array of flux error values for each SAP epoch.
+            mask_epochs_sap (array): Array of mask values for each SAP epoch.
+            mask_fitted_planet_epochs_sap (array): Array of mask values for each fitted planet epoch in SAP flux.
 
-    Tuple containing the necessary data for further analysis for PDC flux:
-    - x_epochs_pdc (array): Array of time values for each PDC epoch.
-    - y_epochs_pdc (array): Array of flux values for each PDC epoch.
-    - yerr_epochs_pdc (array): Array of flux error values for each PDC epoch.
-    - mask_epochs_pdc (array): Array of mask values for each PDC epoch.
-    - mask_fitted_planet_epochs_pdc (array): Array of mask values for each fitted planet epoch in PDC flux.
+        Tuple containing the necessary data for further analysis for PDC flux:
+            x_epochs_pdc (array): Array of time values for each PDC epoch.
+            y_epochs_pdc (array): Array of flux values for each PDC epoch.
+            yerr_epochs_pdc (array): Array of flux error values for each PDC epoch.
+            mask_epochs_pdc (array): Array of mask values for each PDC epoch.
+            mask_fitted_planet_epochs_pdc (array): Array of mask values for each fitted planet epoch in PDC flux.
     """
 
     sap_vals = find_flux_jumps(

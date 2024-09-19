@@ -1,13 +1,13 @@
 import numpy as np
 import time
 
-from .cofi_AM import *
-from .poly_AM import *
-from .poly_local import *
-from .gp import *
-from .plot import plot_individual_outliers
-from .manipulate_data import *
-from .outlier_rejection import *
+from democratic_detrender.cofi_AM import *
+from democratic_detrender.poly_AM import *
+from democratic_detrender.poly_local import *
+from democratic_detrender.gp import *
+from democratic_detrender.plot import plot_individual_outliers
+from democratic_detrender.manipulate_data import *
+from democratic_detrender.outlier_rejection import *
 
 
 def trim_jump_times(x, y, yerr, mask, mask_fitted_planet, t0s, period, jump_times):
@@ -15,22 +15,22 @@ def trim_jump_times(x, y, yerr, mask, mask_fitted_planet, t0s, period, jump_time
     Trim light curve around the labeled jump (ie. problem) times in time series data.
 
     Parameters:
-    - x (array): Time values.
-    - y (array): Flux values.
-    - yerr (array): Flux error values.
-    - mask (array): Mask array.
-    - mask_fitted_planet (array): Mask array for fitted planet.
-    - t0s (array): Midtransit times.
-    - period (float): Planet period to help split data around transits.
-    - jump_times (list): List of jump times to trim around transits.
+        x (array): Time values.
+        y (array): Flux values.
+        yerr (array): Flux error values.
+        mask (array): Mask array.
+        mask_fitted_planet (array): Mask array for fitted planet.
+        t0s (array): Midtransit times.
+        period (float): Planet period to help split data around transits.
+        jump_times (list): List of jump times to trim around transits.
 
     Returns:
-    Tuple of arrays containing trimmed time series data:
-    - x_epochs (array): Trimmed time values.
-    - y_epochs (array): Trimmed flux values.
-    - yerr_epochs (array): Trimmed flux error values.
-    - mask_epochs (array): Trimmed mask array.
-    - mask_fitted_planet_epochs (array): Trimmed mask array for fitted planet.
+        Tuple of arrays containing trimmed time series data:
+            x_epochs (array): Trimmed time values.
+            y_epochs (array): Trimmed flux values.
+            yerr_epochs (array): Trimmed flux error values.
+            mask_epochs (array): Trimmed mask array.
+            mask_fitted_planet_epochs (array): Trimmed mask array for fitted planet.
     """
 
     if jump_times != []:
@@ -151,11 +151,11 @@ def get_detrended_lc(y, detrending_model):
     Get detrended light curve (LC).
 
     Parameters:
-    - y (array): Light curve (LC).
-    - detrending_model (array): Stellar detrending model evaluated at the same time as LC.
+        y (array): Light curve (LC).
+        detrending_model (array): Stellar detrending model evaluated at the same time as LC.
 
     Returns:
-    array: Detrended light curve evaluated at the same time as input LC.
+        array: Detrended light curve evaluated at the same time as input LC.
     """
     detrended_lc = ((y + 1) / (detrending_model + 1)) - 1
 
@@ -182,24 +182,24 @@ def detrend_variable_methods(
 	Detrend light curves using various methods.
 
 	Parameters:
-	- x_epochs (array): Array of time values for each epoch.
-	- y_epochs (array): Array of flux values for each epoch.
-	- yerr_epochs (array): Array of flux error values for each epoch.
-	- mask_epochs (array): Array of mask values for each epoch.
-	- mask_fitted_planet_epochs (array): Array of mask values for each fitted planet epoch.
-	- problem_times (list): List of jump times to trim structured noise.
-	- t0s (list): List of midtransit times.
-	- period (float): Planet period to define plotting limit.
-	- duration (float): Transit duration.
-	- cadence (float): Cadence of observations.
-	- save_to_directory (str): Directory path to save plots.
-	- show_plots (bool): Whether to display plots.
-	- detrend_methods (list): List of detrending methods to apply.
+	    x_epochs (array): Array of time values for each epoch.
+	    y_epochs (array): Array of flux values for each epoch.
+	    yerr_epochs (array): Array of flux error values for each epoch.
+	    mask_epochs (array): Array of mask values for each epoch.
+	    mask_fitted_planet_epochs (array): Array of mask values for each fitted planet epoch.
+	    problem_times (list): List of jump times to trim structured noise.
+	    t0s (list): List of midtransit times.
+	    period (float): Planet period to define plotting limit.
+	    duration (float): Transit duration.
+	    cadence (float): Cadence of observations.
+	    save_to_directory (str): Directory path to save plots.
+	    show_plots (bool): Whether to display plots.
+	    detrend_methods (list): List of detrending methods to apply.
 
 	Returns:
-	Tuple containing detrending methods used and output arrays:
-	- detrend_methods_out (list): List of detrending methods applied.
-	- output (list): List of arrays containing detrended and processed data.
+	    Tuple containing detrending methods used and output arrays:
+	        detrend_methods_out (list): List of detrending methods applied.
+	        output (list): List of arrays containing detrended and processed data.
 	"""
 
     (

@@ -5,7 +5,7 @@ import pandas as pd
 
 from scipy.interpolate import interp1d
 from matplotlib.widgets import Slider, Button
-from .helper_functions import bin_data
+from democratic_detrender.helper_functions import bin_data
 
 
 import matplotlib
