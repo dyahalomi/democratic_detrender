@@ -1,4 +1,4 @@
-(https://github.com/dyahalomi/democratic_detrender/blob/main/logo.png)
+![Alt Text](https://github.com/dyahalomi/democratic_detrender/blob/main/logo.png)
 
 Repository that contains the source code for the democratic detrender
 
