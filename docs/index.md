@@ -1,10 +1,9 @@
 democratic detrender
 ====================
 
-Landing page
+Welcome to the documentation for the `democratic detrender`!
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
+Stellar time-series photometry is a combination of periodic, quasi-periodic, and non-periodic variations caused by both physical and instrumental factors. There is thus no "perfect" model for this nuisance signal. To mitigate model dependency, `democratic detrender` that performs stellar detrending using a novel ensemble-based "voting" approach via a community-of-models. This detrending package has been extensively tested on thousands of \textit{TESS} and \textit{Kepler} light curves. For more information, please see the [paper that describes the methodology](https://arxiv.org/abs/2411.09753).
 
 ```{toctree}
 :maxdepth: 1
