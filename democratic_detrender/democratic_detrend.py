@@ -669,6 +669,3 @@ def democratic_detrend(
 
     return detrend_df
 
-print('test')
-kepler1513=democratic_detrend('Kepler-1519', 'Kepler')
-
