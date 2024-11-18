@@ -1,3 +1,5 @@
+(https://github.com/dyahalomi/democratic_detrender/blob/main/logo.png)
+
 Repository that contains the source code for the democratic detrender
 
 Documentation is in the process of being constructed, and will be updated shortly!
