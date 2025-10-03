@@ -1,12 +1,6 @@
 from datetime import date
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import exoplanet as xo
-from scipy.interpolate import interp1d
-from scipy.stats import median_abs_deviation
-from matplotlib.widgets import Slider, Button
-import sys, argparse
+import argparse
 import os
 import warnings
 import ast
@@ -114,13 +108,7 @@ def problem_times_only():
 # # # # ---------------------------------------------- now the fun begins ! ! ! ------------------------------------------------ # # #
 
 
-# from find_flux_jumps import *
-# from get_lc import *
-# from helper_functions import *
-# from outlier_rejection import *
-# from manipulate_data import *
-# from plot import plot_detrended_lc
-# from detrend import *
+# from find_flux_jumps import find_flux_jumps, find_sap_and_pdc_flux_jumps
 
 
 # # checks user arguments
