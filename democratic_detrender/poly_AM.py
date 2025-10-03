@@ -1,9 +1,9 @@
+""" This module contains functions to implement the Polynomial Autocorrelation Minimization (polyAM) detrending method. """
+
 import numpy as np
-import matplotlib.pyplot as plt
-import exoplanet as xo
 from scipy.interpolate import interp1d
-from matplotlib.widgets import Slider, Button
-from democratic_detrender.helper_functions import *
+
+from democratic_detrender.helper_functions import durbin_watson, get_detrended_lc
 from democratic_detrender.manipulate_data import split_around_transits
 
 
