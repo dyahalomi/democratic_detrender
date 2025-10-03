@@ -4,6 +4,23 @@ import exoplanet as xo
 from scipy.interpolate import interp1d
 from matplotlib.widgets import Slider, Button
 
+def durbin_watson(residuals):
+    """
+    Calculate the Durbin-Watson statistic for a given set of residuals.
+
+    Parameters:
+        residuals: array-like, residuals from a model
+
+    Returns:
+        float: Durbin-Watson statistic
+    """
+
+    residual_terms = np.diff(residuals)
+    numerator = np.nansum(residual_terms ** 2)
+    denominator = np.nansum(residuals ** 2)
+    assert denominator != 0.0
+    return numerator / denominator
+
 
 def get_detrended_lc(y, detrending_model):
     """
