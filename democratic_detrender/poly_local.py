@@ -1,11 +1,13 @@
 ### Special thanks to Alex Teachey --> adapted from MoonPy package
 ### GitHub: https://github.com/alexteachey/MoonPy
 
+""" This module contains functions to implement the Polynomial Local (polyLOC) detrending method. """
+
 import numpy as np
-from democratic_detrender.manipulate_data import *
-from democratic_detrender.helper_functions import *
-from democratic_detrender.poly_AM import *
-from democratic_detrender.plot import *
+
+from democratic_detrender.manipulate_data import split_around_transits
+from democratic_detrender.helper_functions import get_detrended_lc
+from democratic_detrender.poly_AM import polyAM_function
 
 
 def BIC(model, data, errors, nparams):
@@ -64,8 +66,6 @@ def local_method(
     duration,
     period,
 ):
-
-    from scipy.stats import median_absolute_deviation
 
     x = np.concatenate(x_epochs, axis=0)
     y = np.concatenate(y_epochs, axis=0)
