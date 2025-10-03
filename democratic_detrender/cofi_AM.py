@@ -18,24 +18,6 @@ from democratic_detrender.manipulate_data import split_around_transits
 from democratic_detrender.helper_functions import durbin_watson, get_detrended_lc
 from democratic_detrender.poly_AM import polyAM_function
 
-def DurbinWatson(residuals):
-    """
-    Calculate the Durbin-Watson statistic for a given set of residuals.
-    Parameters:
-        residuals: array-like, residuals from a model
-    Returns:
-        float: Durbin-Watson statistic
-    """
-
-    residual_terms = [
-        residuals[nres + 1] - residuals[nres] for nres in range(len(residuals) - 1)
-    ]
-    residual_terms = np.array(residual_terms)
-    numerator = np.nansum(residual_terms ** 2)
-    denominator = np.nansum(residuals ** 2)
-    assert denominator != 0.0
-    return numerator / denominator
-
 def cofiam_matrix_gen(times, degree):
     """
     Generate the design matrix for the CoFiAM method.
