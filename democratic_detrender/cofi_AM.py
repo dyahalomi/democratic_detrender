@@ -13,13 +13,10 @@ NOW FOR THE MATRIX REPRESENTATION, YOU NEED TO DO THIS FOR EVERY TIMESTEP! The m
 """
 import numpy as np
 from scipy.interpolate import interp1d
-from scipy.linalg import lstsq
-from scipy.stats import median_absolute_deviation
-from scipy import optimize
 
-from democratic_detrender.manipulate_data import *
-from democratic_detrender.helper_functions import *
-from democratic_detrender.poly_AM import *
+from democratic_detrender.manipulate_data import split_around_transits
+from democratic_detrender.helper_functions import durbin_watson, get_detrended_lc
+from democratic_detrender.poly_AM import polyAM_function
 
 def cofiam_matrix_gen(times, degree):
     """
@@ -214,8 +211,6 @@ def cofiam_method(x, y, yerr, mask, mask_fitted_planet, t0s, duration, period, l
     Returns:
         tuple: detrended light curve, Durbin-Watson statistics
     """
-
-    from scipy.interpolate import interp1d
 
     cofiam_mod = []
     cofiam_mod_all = []

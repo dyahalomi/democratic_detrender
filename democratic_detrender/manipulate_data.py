@@ -1,8 +1,6 @@
+""" This module contains functions to split, join and mask light curve data. """
+
 import numpy as np
-import matplotlib.pyplot as plt
-import exoplanet as xo
-from scipy.interpolate import interp1d
-from matplotlib.widgets import Slider, Button
 
 from democratic_detrender.helper_functions import find_nearest
 

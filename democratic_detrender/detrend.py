@@ -1,13 +1,13 @@
 import numpy as np
 import time
 
-from democratic_detrender.cofi_AM import *
-from democratic_detrender.poly_AM import *
-from democratic_detrender.poly_local import *
-from democratic_detrender.gp import *
+from democratic_detrender.cofi_AM import cofiam_method
+from democratic_detrender.poly_AM import polynomial_method
+from democratic_detrender.poly_local import local_method
+from democratic_detrender.gp import gp_method
 from democratic_detrender.plot import plot_individual_outliers
-from democratic_detrender.manipulate_data import *
-from democratic_detrender.outlier_rejection import *
+from democratic_detrender.manipulate_data import split_around_transits
+from democratic_detrender.outlier_rejection import reject_outliers_everywhere
 
 
 def trim_jump_times(x, y, yerr, mask, mask_fitted_planet, t0s, period, jump_times):
@@ -144,22 +144,6 @@ def trim_jump_times(x, y, yerr, mask, mask_fitted_planet, t0s, period, jump_time
         )
 
     return x_epochs, y_epochs, yerr_epochs, mask_epochs, mask_fitted_planet_epochs
-
-
-def get_detrended_lc(y, detrending_model):
-    """
-    Get detrended light curve (LC).
-
-    Parameters:
-        y (array): Light curve (LC).
-        detrending_model (array): Stellar detrending model evaluated at the same time as LC.
-
-    Returns:
-        array: Detrended light curve evaluated at the same time as input LC.
-    """
-    detrended_lc = ((y + 1) / (detrending_model + 1)) - 1
-
-    return np.array(detrended_lc)
 
 
 def detrend_variable_methods(

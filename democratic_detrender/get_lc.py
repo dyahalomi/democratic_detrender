@@ -1,16 +1,11 @@
+""" This module contains functions to obtain light curve data and transit information from the NASA Exoplanet Archive. """
+
 import numpy as np
-import matplotlib.pyplot as plt
-import exoplanet as xo
-from scipy.interpolate import interp1d
-from matplotlib.widgets import Slider, Button
 import pandas as pd
 
-from democratic_detrender.helper_functions import find_nearest
-from democratic_detrender.helper_functions import determine_cadence
+from democratic_detrender.helper_functions import determine_cadence, find_nearest
 
-import math
 import lightkurve as lk
-from astropy.io import fits
 
 
 def tic_id_from_simbad(other_id):

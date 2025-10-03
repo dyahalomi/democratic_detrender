@@ -3,20 +3,25 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
+authors = [{name = "Daniel Yahalomi"}]
 name = "democratic_detrender"
-version = "0.0.1"
-requires-python = "<3.11"
+dynamic = ["version"]
+requires-python = "<3.11" # TODO
+# TODO
+# python<=3.10, 3.11 broke with pymc3
+# pymc>=4
+# exoplanet[pymc]
 dependencies = [
+    "numpy",  
+    "scipy",  
+    "pandas",  
+    "matplotlib",  
     "exoplanet[pymc3]",
+    "pymc3",
     "pymc3_ext",
-    "matplotlib",
     "lightkurve",
     "celerite2",
-    # "numpy<2",
     "ipykernel",
-]
-authors = [
-    {name = "Daniel Yahalomi"},
 ]
 license = {text = "MIT"}
 keywords = ["astronomy", "exoplanets"]
@@ -28,9 +33,30 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Astronomy"
 ]
 
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "coverage",
+    "coverage-badge",
+]
+
+docs = [
+    "sphinx",
+    "sphinx-automodapi",
+    "sphinx_book_theme",
+    "sphinxcontrib-fulltoc",
+    "nbsphinx",
+    "jupyter_client",
+    "ipykernel",
+    "myst_parser",
+    "sphinxcontrib.video",
+]
+
+dev = ["democratic_detrender[test, docs]"]
+
 [project.urls]
 Homepage = "https://github.com/dyahalomi/democratic_detrender"
-# Documentation = "https://squishyplanet.readthedocs.io/en/latest/"
+Documentation = "https://democratic-detrender.readthedocs.io/en/latest/"
 
 [tool.setuptools]
 include-package-data = true
@@ -38,3 +64,17 @@ include-package-data = true
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["democratic_detrender"]
+
+[tool.pytest.ini_options]
+testpaths = [
+  "test",
+  "docs",
+]
+
+[tool.coverage.run]
+omit = [
+ "py_template/__init*",
+ "*/py_template/__init*",
+ "test/*",
+ "*/test/*",
+]

@@ -1,8 +1,7 @@
+""" This module contains helper functions for statistical calculations and data processing. """
+
 import numpy as np
-import matplotlib.pyplot as plt
-import exoplanet as xo
-from scipy.interpolate import interp1d
-from matplotlib.widgets import Slider, Button
+
 
 def durbin_watson(residuals):
     """
@@ -24,13 +23,14 @@ def durbin_watson(residuals):
 
 def get_detrended_lc(y, detrending_model):
     """
-    input:
-    y = light curve
-    detrending model = stellar detrending model evaluated at same time as fluxes
-    
-    returns:
-    detrended_lc = detrended light curve evaluated at same time as fluxes
-    
+    Get detrended light curve (LC).
+
+    Parameters:
+        y (array): Light curve (LC).
+        detrending_model (array): Stellar detrending model evaluated at the same time as LC.
+
+    Returns:
+        array: Detrended light curve evaluated at the same time as input LC.
     """
     detrended_lc = ((y + 1) / (detrending_model + 1)) - 1
 

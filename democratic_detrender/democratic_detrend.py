@@ -1,25 +1,14 @@
 from datetime import date
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import exoplanet as xo
-from scipy.interpolate import interp1d
 from scipy.stats import median_abs_deviation
-from matplotlib.widgets import Slider, Button
-import sys, argparse
 import os
-import warnings
-import ast
 
-
-
-from find_flux_jumps import *
-from get_lc import *
-from helper_functions import *
-from outlier_rejection import *
-from manipulate_data import *
+from find_flux_jumps import find_flux_jumps, find_sap_and_pdc_flux_jumps
+from get_lc import get_light_curve
+from manipulate_data import add_nans_for_missing_data
 from plot import plot_detrended_lc
-from detrend import *
+from detrend import detrend_sap_and_pdc, detrend_one_lc
 
 
 def democratic_detrend(

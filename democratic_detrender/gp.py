@@ -1,21 +1,18 @@
+""" This module contains functions to implement the Gaussian Process (GP) detrending method. """
+
 import numpy as np
-import matplotlib.pyplot as plt
-import exoplanet as xo
 from scipy.interpolate import interp1d
-from matplotlib.widgets import Slider, Button
-from democratic_detrender.manipulate_data import *
-from democratic_detrender.helper_functions import *
-from democratic_detrender.poly_AM import *
 
 import pymc3 as pm
 import pymc3_ext as pmx
-import aesara_theano_fallback.tensor as tt
-from functools import partial
 from celerite2.theano import terms, GaussianProcess
-import theano
+# TODO: only using theano import for log and warning statements; could remove
+import theano 
 import logging
-from scipy.stats import median_absolute_deviation
 
+from democratic_detrender.manipulate_data import split_around_transits
+from democratic_detrender.helper_functions import get_detrended_lc
+from democratic_detrender.poly_AM import polyAM_function
 
 def gp_new(time_star, lc_star, lc_err_star, time_model):
 
