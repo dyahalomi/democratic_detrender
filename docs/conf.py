@@ -3,33 +3,22 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+import datetime
+
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-import sys
-import os
+from democratic_detrender import __version__
 
-sys.path.insert(0, os.path.abspath("."))
-sys.path.insert(
-    0, os.path.abspath("../democratic_detrender")
-)  # If your modules are in a parent directory
-
+release = __version__
 project = 'democratic_detrender'
-copyright = '2024, Daniel Yahalomi'
 author = 'Daniel Yahalomi'
-release = '0.0.1'
-
-# if you eventually refactor into a package format, add the path here
-sys.path.insert(0, os.path.abspath(".."))
-# sys.path.insert(
-#     0, os.path.abspath("../democratic_detrender")
-# )  # If your modules are in a parent directory
+copyright = f"{datetime.datetime.now().year}, {author}"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    # "sphinx_rtd_theme",
     "sphinx.ext.autodoc",
     "sphinx.ext.doctest",
     "sphinx.ext.todo",
@@ -41,12 +30,18 @@ extensions = [
     "myst_parser",
     "sphinxcontrib.video",
     # "sphinx.ext.pngmath",
+    "sphinx.ext.inheritance_diagram",
+    "sphinx_automodapi.smart_resolver",
 ]
 
+mathjax_path = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML"
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "visualizations"]
 source_suffix = [".rst", ".md"]
-
+# The master toctree document.
+master_doc = "index"
+# Treat everything in single ` as a Python reference.
+default_role = "py:obj"
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -58,7 +53,9 @@ html_sourcelink_suffix = ""
 html_title = "democratic detrender"
 # html_favicon = "_static/jupiter.png"
 html_static_path = ["_static"]
+autoclass_content = "both"
 
+# TODO: remove unused
 html_theme_options = {
     "path_to_docs": "docs",
     "repository_url": "https://github.com/dyahalomi/democratic_detrender",
