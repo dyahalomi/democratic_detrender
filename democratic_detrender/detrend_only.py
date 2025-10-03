@@ -10,7 +10,7 @@ import warnings
 import json
 
 def detrend_only():
-    print("working on turning this .py into a function")
+    print("NOT CURRENTLY SUPPORTED")
     return None
 
 # warnings.simplefilter('ignore', np.RankWarning)
