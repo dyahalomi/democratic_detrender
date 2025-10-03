@@ -13,6 +13,9 @@ NOW FOR THE MATRIX REPRESENTATION, YOU NEED TO DO THIS FOR EVERY TIMESTEP! The m
 """
 import numpy as np
 from scipy.interpolate import interp1d
+
+from democratic_detrender.manipulate_data import split_around_transits
+from democratic_detrender.helper_functions import durbin_watson, get_detrended_lc
 from scipy.linalg import lstsq
 from scipy.stats import median_absolute_deviation
 from scipy import optimize
