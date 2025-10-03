@@ -6,7 +6,8 @@ on:
   pull_request:
     types: [review_requested, closed]
     branches: [main]
-
+  workflow_dispatch:
+  
 # Prevent multiple PRs from building/deploying the docs at the same time
 concurrency:
   group: ${{ github.workflow }}
