@@ -1,13 +1,13 @@
 import numpy as np
 import time
 
-from democratic_detrender.cofi_AM import *
-from democratic_detrender.poly_AM import *
-from democratic_detrender.poly_local import *
-from democratic_detrender.gp import *
+from democratic_detrender.cofi_AM import cofiam_method
+from democratic_detrender.poly_AM import polynomial_method
+from democratic_detrender.poly_local import local_method
+from democratic_detrender.gp import gp_method
 from democratic_detrender.plot import plot_individual_outliers
-from democratic_detrender.manipulate_data import *
-from democratic_detrender.outlier_rejection import *
+from democratic_detrender.manipulate_data import split_around_transits
+from democratic_detrender.outlier_rejection import reject_outliers_everywhere
 
 
 def trim_jump_times(x, y, yerr, mask, mask_fitted_planet, t0s, period, jump_times):
