@@ -18,7 +18,27 @@ from scipy.stats import median_absolute_deviation
 
 
 def gp_new(time_star, lc_star, lc_err_star, time_model):
-
+    """
+    A function that fits a GP to the out-of-transit data of a single epoch
+    and returns the maximum a posteriori solution.
+    
+    Parameters
+    ----------
+    time_star : array
+        The time array of the light curve.
+    lc_star : array
+        The flux array of the light curve.
+    lc_err_star : array
+        The flux error array of the light curve.
+    time_model : array
+        The time array of the full light curve (including in-transit data). This is used to compute the GP prediction.
+    
+    Returns
+    -------
+    map_soln : dict
+        A dictionary containing the maximum a posteriori solution of the GP fit.
+    """
+    # Set up the model
     # ignore theano warnings unless it's an error
     logger = logging.getLogger("theano.tensor.opt")
     logger.setLevel(logging.ERROR)
@@ -61,7 +81,34 @@ def gp_new(time_star, lc_star, lc_err_star, time_model):
 
 
 def gp_method(x, y, yerr, mask, mask_fitted_planet, t0s, duration, period):
-
+    """
+    A function that applies the GP detrending method to a list of light curve epochs.
+    It fits a GP to the out-of-transit data of each epoch and returns the detrended light curve.
+    
+    Parameters
+    ----------
+    x : list of arrays
+        A list of time arrays for each epoch.
+    y : list of arrays
+        A list of flux arrays for each epoch.
+    yerr : list of arrays
+        A list of flux error arrays for each epoch.
+    mask : list of arrays
+        A list of boolean arrays indicating the in-transit data points for each epoch.
+    mask_fitted_planet : list of arrays
+        A list of boolean arrays indicating the data points used to fit the planet model for each epoch.
+    t0s : array
+        The transit midpoints of the planet.
+    duration : float
+        The duration of the planet transit in hours.
+    period : float
+        The orbital period of the planet in days.
+        
+    Returns
+    -------
+    detrended_lc : array
+        The detrended light curve obtained by applying the GP method.
+    """
     theano.config.compute_test_value = "warn"
 
     gp_mod = []
