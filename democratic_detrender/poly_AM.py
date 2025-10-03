@@ -7,21 +7,6 @@ from democratic_detrender.helper_functions import *
 from democratic_detrender.manipulate_data import split_around_transits
 
 
-def DurbinWatson(residuals):
-    residual_terms = []
-    for nres, res in enumerate(residuals):
-        try:
-            residual_terms.append(residuals[nres + 1] - residuals[nres])
-        except:
-            pass
-    residual_terms = np.array(residual_terms)
-    numerator = np.nansum(residual_terms ** 2)
-    denominator = np.nansum(residuals ** 2)
-
-    assert denominator != 0.0
-    return numerator / denominator
-
-
 def polyAM_function(times, fluxes, degree):
     poly_coeffs = np.polyfit(times, fluxes, degree)
     model = np.polyval(poly_coeffs, times)
@@ -90,7 +75,7 @@ def polyAM_iterative(
                 (fluxes[local_start_index:in_transit_index] + 1)
                 / (model[local_start_index:in_transit_index] + 1)
             ) - 1
-            DWstat_pre_transit = DurbinWatson(residuals_pre_transit)
+            DWstat_pre_transit = durbin_watson(residuals_pre_transit)
 
         if no_post_transit:
             DWstat_post_transit = 2.0
@@ -117,7 +102,7 @@ def polyAM_iterative(
                 )
             ) - 1
 
-            DWstat_post_transit = DurbinWatson(residuals_post_transit)
+            DWstat_post_transit = durbin_watson(residuals_post_transit)
 
         val_to_minimize = np.sqrt(
             (DWstat_pre_transit - 2.0) ** 2.0 + (DWstat_post_transit - 2.0) ** 2.0
