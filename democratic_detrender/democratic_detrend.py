@@ -4,11 +4,11 @@ import pandas as pd
 from scipy.stats import median_abs_deviation
 import os
 
-from find_flux_jumps import find_flux_jumps, find_sap_and_pdc_flux_jumps
-from get_lc import get_light_curve
-from manipulate_data import add_nans_for_missing_data
-from plot import plot_detrended_lc
-from detrend import detrend_sap_and_pdc, detrend_one_lc
+from democratic_detrender.find_flux_jumps import find_flux_jumps, find_sap_and_pdc_flux_jumps
+from democratic_detrender.get_lc import get_light_curve
+from democratic_detrender.manipulate_data import add_nans_for_missing_data
+from democratic_detrender.plot import plot_detrended_lc
+from democratic_detrender.detrend import detrend_sap_and_pdc, detrend_one_lc
 
 
 def democratic_detrend(
