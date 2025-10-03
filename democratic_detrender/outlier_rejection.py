@@ -1,9 +1,6 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import exoplanet as xo
-from scipy.interpolate import interp1d
-from matplotlib.widgets import Slider, Button
+""" This module contains functions to perform outlier rejection on light curve data. """
 
+import numpy as np
 
 def reject_outliers_out_of_transit(
     time, flux, flux_err, mask, mask_fitted_planet, time_window, sigma_window
