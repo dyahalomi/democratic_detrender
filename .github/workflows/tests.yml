@@ -1,0 +1,41 @@
+name: tests
+
+on: 
+  push:
+    # match all branch names
+    branches:
+      - "**"
+  schedule:
+    # once a week
+    - cron: "20 07 * * 0"
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install test dependencies
+        run: |
+          pip install setuptools --upgrade
+          pip install .[test]
+
+      - name: Install
+        run: pip install .
+
+      - name: Run unit tests
+        run: |
+          mkdir -p test-reports
+          py.test -v --junitxml=test-reports/junit.xml democratic_detrender/tests.py
