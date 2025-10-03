@@ -3,15 +3,10 @@
 from datetime import date
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import exoplanet as xo
-from scipy.interpolate import interp1d
 from scipy.stats import median_abs_deviation
-from matplotlib.widgets import Slider, Button
-import sys, argparse
+import argparse
 import os
 import warnings
-import ast
 import json
 
 def detrend_only():
@@ -57,18 +52,9 @@ def detrend_only():
 
 # # # # ---------------------------------------------- now the fun begins ! ! ! ------------------------------------------------ # # #
 
-
-
-
-# #print(f"exoplanet.__version__ = '{xo.__version__}'")
-
-# from find_flux_jumps import *
-# from get_lc import *
-# from helper_functions import *
-# from outlier_rejection import *
-# from manipulate_data import *
+# from helper_functions import determine_cadence
 # from plot import plot_detrended_lc
-# from detrend import *
+# from detrend import detrend_one_lc
 
 
 
