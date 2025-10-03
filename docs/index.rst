@@ -3,6 +3,8 @@ democratic detrender
 
 Welcome to the documentation for the ``democratic detrender``!
 
+*The documentation is currently under construction, with the API to be updated and tutorials added soon.*
+
 Stellar time-series photometry is a combination of periodic, quasi-periodic, and non-periodic variations 
 caused by both physical and instrumental factors. There is thus no "perfect" model for this nuisance signal. 
 To mitigate model dependency, ``democratic detrender`` that performs stellar detrending using a novel 
