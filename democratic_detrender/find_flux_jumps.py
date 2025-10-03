@@ -1,21 +1,16 @@
+""" This module contains functions to identify flux jumps in light curves and return the necessary data for further analysis. """
+
 import os.path
 import json
 import numpy as np
 import matplotlib.pyplot as plt
-import exoplanet as xo
-from scipy.interpolate import interp1d
-from matplotlib.widgets import Slider, Button
 import ast
 
-
-
-# print(f"exoplanet.__version__ = '{xo.__version__}'")
-
-from democratic_detrender.get_lc import *
-from democratic_detrender.helper_functions import *
-from democratic_detrender.outlier_rejection import *
-from democratic_detrender.manipulate_data import *
-from democratic_detrender.plot import *
+from democratic_detrender.get_lc import get_light_curve
+from democratic_detrender.helper_functions import determine_cadence
+from democratic_detrender.outlier_rejection import reject_outliers_out_of_transit 
+from democratic_detrender.manipulate_data import find_quarters_with_transits, split_around_problems, split_around_transits
+from democratic_detrender.plot import plot_outliers, plot_split_data, plot_transits
 
 
 def find_flux_jumps(
