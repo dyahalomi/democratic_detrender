@@ -146,22 +146,6 @@ def trim_jump_times(x, y, yerr, mask, mask_fitted_planet, t0s, period, jump_time
     return x_epochs, y_epochs, yerr_epochs, mask_epochs, mask_fitted_planet_epochs
 
 
-def get_detrended_lc(y, detrending_model):
-    """
-    Get detrended light curve (LC).
-
-    Parameters:
-        y (array): Light curve (LC).
-        detrending_model (array): Stellar detrending model evaluated at the same time as LC.
-
-    Returns:
-        array: Detrended light curve evaluated at the same time as input LC.
-    """
-    detrended_lc = ((y + 1) / (detrending_model + 1)) - 1
-
-    return np.array(detrended_lc)
-
-
 def detrend_variable_methods(
     x_epochs,
     y_epochs,
