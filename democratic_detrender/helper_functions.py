@@ -1,8 +1,7 @@
+""" This module contains helper functions for statistical calculations and data processing. """
+
 import numpy as np
-import matplotlib.pyplot as plt
-import exoplanet as xo
-from scipy.interpolate import interp1d
-from matplotlib.widgets import Slider, Button
+
 
 
 def get_detrended_lc(y, detrending_model):
