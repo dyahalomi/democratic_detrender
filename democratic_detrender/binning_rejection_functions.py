@@ -230,7 +230,7 @@ def reject_via_binning(time_epochs, y_epochs, yerr_epochs, t0s, period, duration
     return sigma_test, beta_dist_MC_epochs, beta_detrended_epochs, upper_bound_epochs
 
 
-def binning_rejection_plots(beta_dist_MC_epochs, beta_detrended_epochs, upper_bound_epochs, columns):
+def binning_rejection_plots(beta_dist_MC_epochs, beta_detrended_epochs, upper_bound_epochs, columns, figpath):
 
     green2, green1 = '#355E3B', '#18A558'
     blue2, blue1 = '#000080', '#4682B4'
@@ -272,7 +272,7 @@ def binning_rejection_plots(beta_dist_MC_epochs, beta_detrended_epochs, upper_bo
 
         plt.tight_layout()
 
-        plt.savefig('./figures/reject_via_binning_epoch'+str(ii+1)+'.pdf')
+        plt.savefig(figpath+'method_rejection_figures/reject_via_binning_epoch'+str(ii+1)+'.pdf')
 
         plt.show()
 

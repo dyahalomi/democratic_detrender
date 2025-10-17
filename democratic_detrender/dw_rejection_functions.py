@@ -238,7 +238,7 @@ def reject_via_DW(time_epochs, y_epochs, yerr_epochs, t0s, period, duration, nit
 
 
 
-def dw_rejection_plots(DWMC_epochs, DWdetrend_epochs, upper_bound_epochs, columns):
+def dw_rejection_plots(DWMC_epochs, DWdetrend_epochs, upper_bound_epochs, columns, figpath):
         
     green2, green1 = '#355E3B', '#18A558'
     blue2, blue1 = '#000080', '#4682B4'
@@ -278,5 +278,5 @@ def dw_rejection_plots(DWMC_epochs, DWdetrend_epochs, upper_bound_epochs, column
 
         plt.tight_layout()
 
-        plt.savefig('./figures/reject_via_dw_epoch'+str(ii+1)+'.pdf')
+        plt.savefig(figpath + 'reject_via_dw_epoch'+str(ii+1)+'.pdf')
         plt.show()
