@@ -179,8 +179,8 @@ def polynomial_method(
             poly_mod.append(best_model)
             poly_mod_all.extend(best_model)
 
-        except:
-            print("polyAM failed for the " + str(ii) + "th epoch")
+        except Exception as e:
+            print(f"polyAM failed for the {ii}th epoch: {e}")
             # gp failed for this epoch, just add nans of the same size
             nan_array = np.empty(np.shape(y_ii))
             nan_array[:] = np.nan
@@ -239,8 +239,8 @@ def polynomial_method(
             y_out_detrended.append(y_ii_linear_detrended)
             x_out_detrended.append(x_ii)
 
-        except:
-            print("polyAM failed for the " + str(ii) + "th epoch")
+        except Exception as e:
+            print(f"polyAM failed for the {ii}th epoch at the linear step: {e}")
             # polyAM failed for this epoch, just add nans of the same size
             nan_array = np.empty(np.shape(y_ii))
             nan_array[:] = np.nan

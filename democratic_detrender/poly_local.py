@@ -4,6 +4,7 @@
 """ This module contains functions to implement the Polynomial Local (polyLOC) detrending method. """
 
 import numpy as np
+from scipy.interpolate import interp1d
 
 from democratic_detrender.manipulate_data import split_around_transits
 from democratic_detrender.helper_functions import get_detrended_lc
@@ -115,8 +116,9 @@ def local_method(
 
             local_mod.append(best_model)
 
-        except:
-            print("local failed for the " + str(ii) + "th epoch")
+
+        except Exception as e:
+            print(f"local failed for the {ii}th epoch: {e}")
             # local failed for this epoch, just add nans of the same size
             nan_array = np.empty(np.shape(x_ii))
             nan_array[:] = np.nan
@@ -152,8 +154,8 @@ def local_method(
             y_ii_linear_detrended = get_detrended_lc(y_ii_detrended, model_ii_linear)
             y_out_detrended.append(y_ii_linear_detrended)
 
-        except:
-            print("local failed for the " + str(ii) + "th epoch")
+        except Exception as e:
+            print(f"local failed for the {ii}th epoch at linear step: {e}")
             # local failed for this epoch, just add nans of the same size
             nan_array = np.empty(np.shape(x_ii))
             nan_array[:] = np.nan

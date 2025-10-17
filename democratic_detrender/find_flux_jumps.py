@@ -106,7 +106,7 @@ def find_flux_jumps(
         lc_df = pd.read_csv(user_light_curve+'lc.csv')
         lc_metadata = pd.read_csv(user_light_curve+'lc_metadata.csv')
         orbital_data = pd.read_csv(user_light_curve+'orbital_data.csv')
-        t0s_output = pd.read_csv(user_light_curve+'t0s_output.csv')
+        t0s_df = pd.read_csv(user_light_curve+'t0s.csv')
 
 
         time = lc_df['xs'].values
@@ -114,7 +114,7 @@ def find_flux_jumps(
         lc_err = lc_df['ys_err'].values
         mask = lc_df['mask'].values
         mask_fitted_planet = lc_df['mask_fitted_planet'].values
-        t0s = t0s_output['t0s_in_data'].values
+        t0s = t0s_df['t0s_in_data'].values
         period = orbital_data['period'].values[0]
         duration = orbital_data['duration'].values[0]
         quarters = list(lc_metadata['quarters'].apply(ast.literal_eval).values)

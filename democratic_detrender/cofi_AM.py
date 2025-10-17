@@ -161,7 +161,7 @@ def cofiam_iterative(
                 (fluxes[local_start_index:in_transit_index] + 1)
                 / (model[local_start_index:in_transit_index] + 1)
             ) - 1
-            DWstat_pre_transit = DurbinWatson(residuals_pre_transit)
+            DWstat_pre_transit = durbin_watson(residuals_pre_transit)
 
         if no_post_transit:
             DWstat_post_transit = 2.0
@@ -179,7 +179,7 @@ def cofiam_iterative(
                     + 1
                 )
             ) - 1
-            DWstat_post_transit = DurbinWatson(residuals_post_transit)
+            DWstat_post_transit = durbin_watson(residuals_post_transit)
         val_to_minimize = np.sqrt(
             (DWstat_pre_transit - 2.0) ** 2.0 + (DWstat_post_transit - 2.0) ** 2.0
         )
@@ -255,8 +255,8 @@ def cofiam_method(x, y, yerr, mask, mask_fitted_planet, t0s, duration, period, l
             cofiam_mod.append(best_model)
             cofiam_mod_all.extend(best_model)
 
-        except:
-            print("CoFiAM failed for the " + str(ii) + "th epoch")
+        except Exception as e:
+            print(f"CoFiAM failed for the {ii}th epoch: {e}")
             # CoFiAM failed for this epoch, just add nans of the same size
             nan_array = np.empty(np.shape(y_ii))
             nan_array[:] = np.nan
@@ -314,8 +314,8 @@ def cofiam_method(x, y, yerr, mask, mask_fitted_planet, t0s, duration, period, l
             y_ii_linear_detrended = get_detrended_lc(y_ii_detrended, model_ii_linear)
             y_out_detrended.append(y_ii_linear_detrended)
 
-        except:
-            print("CofiAM failed for the " + str(ii) + "th epoch")
+        except Exception as e:
+            print(f"CoFiAM failed for the {ii}th epoch at the linear step: {e}")
             # CoFiAM failed for this epoch, just add nans of the same size
             nan_array = np.empty(np.shape(y_ii))
             nan_array[:] = np.nan

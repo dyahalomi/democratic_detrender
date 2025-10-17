@@ -3,6 +3,10 @@ import numpy as np
 import pandas as pd
 from scipy.stats import median_abs_deviation
 import os
+import warnings
+
+#surpress np.RankWarning
+warnings.simplefilter("ignore", np.RankWarning)
 
 from democratic_detrender.find_flux_jumps import find_flux_jumps, find_sap_and_pdc_flux_jumps
 from democratic_detrender.get_lc import get_light_curve
