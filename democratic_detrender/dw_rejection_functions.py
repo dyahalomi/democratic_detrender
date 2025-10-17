@@ -238,3 +238,45 @@ def reject_via_DW(time_epochs, y_epochs, yerr_epochs, t0s, period, duration, nit
 
 
 
+def dw_rejection_plots(DWMC_epochs, DWdetrend_epochs, upper_bound_epochs, columns):
+        
+    green2, green1 = '#355E3B', '#18A558'
+    blue2, blue1 = '#000080', '#4682B4'
+    purple2, purple1 = '#2E0854','#9370DB'
+    red2, red1 = '#770737', '#EC8B80'
+
+    colors = [red1, red2,
+              blue1, blue2,
+              green1, green2,
+              purple1, purple2]
+
+
+    for ii in range(0, len(DWMC_epochs)):
+        plt.figure(figsize=[9,7])
+        plt.hist(DWMC_epochs[ii], bins=100, density=True, histtype='step', color='k', linewidth=1, alpha=.7, label = r'White Noise Monte Carlo $\overline{\mathrm{DW}}$')
+
+        for jj in range(0, len(DWdetrend_epochs[ii])):
+            #if sigma_test[columns[jj]][ii]:
+            plt.axvline(DWdetrend_epochs[ii][jj], color=colors[jj], lw=3, label=columns[jj]+ r' $\overline{\mathrm{DW}}$ = ' + str(np.round(DWdetrend_epochs[ii][jj], 2)))
+            #else:
+            #    plt.axvline(DWdetrend_epochs[ii][jj], color=colors[jj], lw=3, label=columns[jj]+' DW = ' + str(np.round(DWdetrend_epochs[ii][jj], 2)), ls='dotted')
+
+        # Plot vertical lines at median, median ± 1 std dev, and median ± 2 std dev
+        # plt.axvspan(0., upper_bound_epochs[ii], color='g', alpha=0.3)
+        plt.axvspan(upper_bound_epochs[ii], 1.5*np.max(DWMC_epochs[ii]), color='r', alpha=0.1)
+        #plt.axvline(upper_bound_epochs[ii], color='r', lw=3, ls='--', label=r'2$\sigma$')
+        plt.text(1.5*np.max(DWMC_epochs[ii])-.1, 0.5, r'$\overline{\mathrm{DW}}$ $>$ 3$\sigma$ outlier', 
+                 verticalalignment='bottom', horizontalalignment='right', fontsize=27, color='r')
+
+        plt.title(r'Bootstrap MC $\overline{\mathrm{DW}}$ Distribution vs. Detrended $\overline{\mathrm{DW}}$s, epoch \#'+str(epochs[ii]+1), fontsize=23)
+        plt.xlabel(r'$\overline{\mathrm{DW}}$ Statistic of Light Curve', fontsize=23)
+        plt.ylabel('Density', fontsize=23)
+        plt.legend(fontsize=13, loc=1)
+
+        plt.xlim(np.min(DWMC_epochs[ii]), 1.5*np.max(DWMC_epochs[ii]))
+
+
+        plt.tight_layout()
+
+        plt.savefig('./figures/reject_via_dw_epoch'+str(ii+1)+'.pdf')
+        plt.show()

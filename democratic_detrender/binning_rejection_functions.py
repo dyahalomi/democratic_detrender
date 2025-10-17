@@ -230,5 +230,49 @@ def reject_via_binning(time_epochs, y_epochs, yerr_epochs, t0s, period, duration
     return sigma_test, beta_dist_MC_epochs, beta_detrended_epochs, upper_bound_epochs
 
 
+def binning_rejection_plots(beta_dist_MC_epochs, beta_detrended_epochs, upper_bound_epochs, columns):
 
+    green2, green1 = '#355E3B', '#18A558'
+    blue2, blue1 = '#000080', '#4682B4'
+    purple2, purple1 = '#2E0854','#9370DB'
+    red2, red1 = '#770737', '#EC8B80'
+
+
+    colors = [red1, red2,
+              blue1, blue2,
+              green1, green2,
+              purple1, purple2]
+
+
+    for ii in range(0, len(beta_dist_MC_epochs)):
+        plt.figure(figsize=[9,7])
+        plt.hist(beta_dist_MC_epochs[ii], bins=100, density=True, histtype='step', color='k', linewidth=1, alpha=.7, label = r'White Noise Monte Carlo $R^2$')
+
+        for jj in range(0, len(beta_detrended_epochs[ii])):
+
+            #if sigma_test[columns[jj]][ii]:
+            plt.axvline(beta_detrended_epochs[ii][jj], color=colors[jj], lw=3, label=columns[jj]+ r' $\hat{\beta}$ = ' + str(np.round(beta_detrended_epochs[ii][jj], 2)))
+            #else:
+            #    plt.axvline(DWdetrend_epochs[ii][jj], color=colors[jj], lw=3, label=columns[jj]+' DW = ' + str(np.round(DWdetrend_epochs[ii][jj], 2)), ls='dotted')
+
+
+        # Plot vertical lines at median, median ± 1 std dev, and median ± 2 std dev
+        # plt.axvspan(0., upper_bound_epochs[ii], color='g', alpha=0.3)
+        plt.axvspan(upper_bound_epochs[ii], 2, color='r', alpha=0.1)
+        plt.text(1.5, 0.5, r'$\hat{\beta}$ $>$ 3$\sigma$ outlier', 
+                 verticalalignment='bottom', horizontalalignment='left', fontsize=27, color='r')
+
+        plt.title(r'Bootstrap MC $\hat{\beta}$ Distribution vs. Detrended $\hat{\beta}$s, epoch \#'+str(epochs[ii]+1), fontsize=23)
+        plt.xlabel(r'$\hat{\beta}$ Statistic for RMS vs. Bin Size Test of Light Curve', fontsize=23)
+        plt.ylabel('Density', fontsize=23)
+        plt.legend(fontsize=13, loc=1)
+
+        #plt.xlim(np.min(r_squared_MC_epochs[ii]), np.max(r_squared_MC_epochs[ii]))
+        plt.xlim(0.3,2)
+
+        plt.tight_layout()
+
+        plt.savefig('./figures/reject_via_binning_epoch'+str(ii+1)+'.pdf')
+
+        plt.show()
 
