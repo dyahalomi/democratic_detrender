@@ -14,7 +14,7 @@ from democratic_detrender.manipulate_data import add_nans_for_missing_data
 from democratic_detrender.plot import plot_detrended_lc, plot_phase_fold_lc
 from democratic_detrender.detrend import detrend_sap_and_pdc, detrend_one_lc
 from democratic_detrender.dw_rejection_functions import reject_via_DW, dw_rejection_plots
-from democratic_detrender.binning_rejection_plots import reject_via_binning, binning_rejection_plots
+from democratic_detrender.binning_rejection_functions import reject_via_binning, binning_rejection_plots
 from democratic_detrender.method_rejection_functions import ensemble_step, merge_epochs, reject_epochs_by_white_noise_tests
 
 def democratic_all(
