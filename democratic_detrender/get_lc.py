@@ -230,6 +230,7 @@ def get_light_curve(
     user_duration=None,
     planet_number=1,
     mask_width=1.3,
+    remove_PDCSAP_blend=True
 ):
     """
     Obtains light curve data based on the object ID, flux type, and optional user-provided transit parameters.
@@ -244,6 +245,7 @@ def get_light_curve(
         user_duration (float, optional): User-provided transit duration. Defaults to None.
         planet_number (int, optional): Number of the planet in the system. Defaults to 1.
         mask_width (float, optional): Width multiplier for creating transit masks. Defaults to 1.3.
+        remove_PDCSAP_blend (bool, optional). Whether to remove the assumed blend factor from PDCSAP data. Defaults to True.
 
     Returns:
         tuple: A tuple containing the light curve data:
@@ -415,22 +417,70 @@ def get_light_curve(
 
         return None
 
-    lc = lc_files.stitch().remove_nans()
 
-    xs = lc.time.value
-    ys = lc.flux
-    ys_err = lc.flux_err
+    #remove blend factor from PDCSAP data
+    if remove_PDCSAP_blend:
 
+        if flux_type == 'pdcsap_flux':
+            xs = []
+            ys = []
+            ys_err = []
+            for ii in range(0, len(lc_files)):
+                #normalize flux value so you can add the blend factors
+                lc = lc_files[ii].normalize().remove_nans() 
+                f = flux_fraction[ii]
+                c = crowding[ii]
+
+                # Retrieve flux for the individual light curve
+                x = lc.time.value
+                y = lc.flux.value
+                y_err = lc.flux_err.value
+
+
+                # Apply the transformation to ys (flux)
+                y_transformed = y / c
+
+
+                # Append the modified light curve to the list
+                xs.extend(x)
+                ys.extend(y_transformed)
+                ys_err.extend(y_err)
+
+
+            # make the lists np arrays
+            xs = np.array(xs)
+            ys = np.array(ys)
+            ys_err = np.array(ys_err)
+
+
+        else:
+            lc = lc_files.stitch().remove_nans()
+
+            xs = lc.time.value
+            ys = lc.flux.value
+            ys_err = lc.flux_err.value
+
+
+    else:
+        lc = lc_files.stitch().remove_nans()
+
+        xs = lc.time.value
+        ys = lc.flux
+        ys_err = lc.flux_err
+
+
+    #define lc_mask for mask determination 
+    lc_mask = lc_files.stitch().remove_nans() 
     mask = np.zeros(np.shape(xs), dtype=bool)
     for ii in range(0, nplanets):
-        masks = lc.create_transit_mask(
+        masks = lc_mask.create_transit_mask(
             period=periods[ii],
             duration=durations[ii] / 24.0 * mask_width,
             transit_time=t0s[ii],
         )
         mask += masks
 
-    mask_fitted_planet = lc.create_transit_mask(
+    mask_fitted_planet = lc_mask.create_transit_mask(
         period=periods[planet_number - 1],
         duration=durations[planet_number - 1] / 24.0 * mask_width,
         transit_time=t0s[planet_number - 1],

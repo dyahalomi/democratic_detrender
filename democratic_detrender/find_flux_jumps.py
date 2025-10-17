@@ -29,7 +29,8 @@ def find_flux_jumps(
     dont_bin=False,
     data_name=None,
     problem_times_default=None,
-    user_light_curve='NO'
+    user_light_curve=None,
+    remove_PDCSAP_blend=True
 ):
 
     """
@@ -53,6 +54,7 @@ def find_flux_jumps(
         data_name (str, optional): Name of the data source.
         problem_times_default (str, optional): Default problem times source.
         user_light_curve (string, optional): path to folder with user light curve. Default: NO.
+        remove_PDCSAP_blend (bool, optional). Whether to remove the assumed blend factor from PDCSAP data. Defaults to True.
 
 
     Returns:
@@ -70,7 +72,7 @@ def find_flux_jumps(
 
     """
 
-    if user_light_curve == 'NO':
+    if user_light_curve == None:
         # pull in light curve
         (
             time,
@@ -94,6 +96,7 @@ def find_flux_jumps(
             user_durations,
             planet_number,
             mask_width,
+            remove_PDCSAP_blend
         )
 
     else:
@@ -319,7 +322,7 @@ def find_sap_and_pdc_flux_jumps(
     data_name=None,
     problem_times_default=None,
     no_pdc_problem_times=True,
-    user_light_curve='NO'
+    user_light_curve=None
 ):
 
     """

@@ -535,7 +535,7 @@ def detrend_sap_and_pdc(
         period=pdc_values[7],
         duration=pdc_values[8],
         cadence=pdc_values[9],
-        save_to_directory=save_dir + "sap_",
+        save_to_directory=save_dir + "pdc_",
         show_plots=pop_out_plots,
         detrend_methods=detrend_methods,
     )
