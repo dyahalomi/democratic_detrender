@@ -17,7 +17,7 @@ from democratic_detrender.dw_rejection_functions import reject_via_DW, dw_reject
 from democratic_detrender.binning_rejection_functions import reject_via_binning, binning_rejection_plots
 from democratic_detrender.method_rejection_functions import ensemble_step, merge_epochs, reject_epochs_by_white_noise_tests
 
-def democratic_all(
+def detrend_all(
     input_id, mission, flux_type='both', input_planet_number=1, input_dir='./',
     input_depth=0.01, input_period=None, input_t0=None, input_duration=None, input_mask_width=1.1, 
     input_show_plots=False, input_dont_bin=False, input_use_sap_problem_times=False, 
@@ -420,7 +420,7 @@ def democratic_all(
         yerr_detrended = pdc_local_yerr
         mask_detrended = pdc_local_mask
 
-        detrend_label = ["local PDCSAP", "polyAM PDCSAP", "GP PDCSAP", "CoFiAM PDCSAP"]
+        detrend_label = ["local", "polyAM", "GP", "CoFiAM"]
 
         y_detrended = np.array(y_detrended)
         y_detrended_transpose = y_detrended.T
