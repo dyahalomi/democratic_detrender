@@ -1,16 +1,8 @@
 ### Special thanks to Alex Teachey --> adapted from MoonPy package
 ### GitHub: https://github.com/alexteachey/MoonPy
 
-"""
-we need to solve the problem
-AX = B
-where A is a vector of coefficients for our linear problem
-X is a matrix of terms, multiplying those values by the coefficients in A will give us
-B the function values.
-NOTE THAT THE COFIAM ALGORITHM FITS TERMS AS FOLLOWS
-offset + (amp_s1 * (sin(2pi * time * 1) / (2 * baseline)) + amp_c1 * (cos(2*pi*time * 1) / 2*baseline) + ... up to the degree in question.
-NOW FOR THE MATRIX REPRESENTATION, YOU NEED TO DO THIS FOR EVERY TIMESTEP! The matrix rows are for each time in your array!
-"""
+""" This module contains functions to implement the CoFiAM (Cosine Filtering with Autocorrelation Minimization) detrending method. """
+
 import numpy as np
 from scipy.interpolate import interp1d
 
@@ -194,8 +186,27 @@ def cofiam_iterative(
 
 
 def cofiam_method(x, y, yerr, mask, mask_fitted_planet, t0s, duration, period, local_x):
-    """
+    # TODO: eqn rendering in API
+    r"""
     Apply the CoFiAM method for detrending a light curve.
+
+    We need to solve the problem :math:`AX = B`, where :math:`A` is a vector of 
+    coefficients for our linear problem and :math:`X` is a matrix of terms whose values 
+    when multiplied by the coefficients in :math:`A` given the function values :math:`B`.
+
+    To do this, the CoFiAM algorithm fits terms up to arbitrary degree as:
+
+    .. math::
+            f_k(t) = a_0 + \sum_{k=1}^N_{\rm order} x_k \sin(\frac{2\pi t k}{2D}) + y_k \cos(\frac{2\pi t k}{2D})
+
+    where :math:`a_0` is the offset, 
+    :math:`N_{\rm order}` is the highest allowed harmonic order, 
+    :math:`x_k` and :math:`y_k` are are free parameters, 
+    :math:`t` is the set of observing times in a given epoch, 
+    and :math:`D` is the total baseline of the time-series data in the given epoch.
+
+    For the matrix representation, this must be done for every timestep, i.e.,
+    the matrix rows are for each time in your array.
 
     Parameters:
         x: array-like, time values
