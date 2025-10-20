@@ -8,7 +8,7 @@ from democratic_detrender.gp import gp_method
 from democratic_detrender.plot import plot_individual_outliers
 from democratic_detrender.manipulate_data import split_around_transits
 from democratic_detrender.outlier_rejection import reject_outliers_everywhere
-
+from democratic_detrender.helper_functions import find_nearest
 
 def trim_jump_times(x, y, yerr, mask, mask_fitted_planet, t0s, period, jump_times):
     """
