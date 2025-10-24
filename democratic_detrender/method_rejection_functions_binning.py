@@ -8,49 +8,56 @@ from scipy.special import erf
 
 
 def binning_monte_carlo(x, y, yerr, niter=1000):
-    
-    
-    beta_dist = []
-    sigma_1 = np.nanstd(y)
-    for ii in range(0, niter):
-        fake_residuals = np.random.normal(loc=0.0, 
-                                          scale=yerr, 
-                                          size=np.shape(yerr))
+    """
+    Vectorized MC for beta distribution (RMS vs. bin test).
+    - Keeps your signature and semantics.
+    - Uses bmin = 1, bmax = N//10.
+    - Uses np.nanmedian across bin sizes.
+    """
+    yerr = np.asarray(yerr, dtype=float)
+    N = yerr.shape[0]
+    if N == 0:
+        return []
 
+    # Ensure at least one candidate bin size (avoids empty ranges for short series)
+    bmax = max(1, N // 10)
 
-        bmin = 2
-        bmax = int(len(x)/10) # Maximum bin size to try
-        binsize = [0 for i in range(bmin,bmax+1)] # Initialize binsize array
-        rms = [0 for i in range(bmin,bmax+1)] # Initialize rms array
-        rmstheory = [0 for i in range(bmin,bmax+1)] # Initialize rmstheory array
-        beta_n = [0 for i in range(bmin,bmax+1)] # Initialize beta_n array
+    # Generate all MC draws at once: shape (niter, N)
+    rng = np.random.default_rng()
+    fake = rng.normal(0.0, yerr, size=(niter, N))
+    # Per-realization unbinned std (σ1) — consistent with each realization
+    sigma1 = np.nanstd(fake, axis=1)  # shape (niter,)
 
-        for b in range(bmin,bmax+1):
-            # Create a binned time series of the data = "binned"
-            imax = int( np.floor(len(fake_residuals)/b) ) # Length of the new binned array
+    betas_per_b = []
 
-            binned = [0 for i in range(imax)]      # Initialize this new array
-            for i in range(imax):
-                binned[i] = np.nanmean(fake_residuals[b*i+1:(i+1)*b])
+    # Loop over bin sizes (fast inner ops via reshape)
+    for b in range(1, bmax + 1):
+        imax = N // b  # number of bins
+        if imax < 2:
+            continue  # avoid undefined sqrt(imax/(imax-1)) for imax=1
 
-            # Compute the r.m.s. of this binned time series
-            rms[b-bmin] = np.nanstd(binned)
-            binsize[b-bmin] = b
-            rmstheory[b-bmin] = (sigma_1*b**(-0.5)*(imax/(imax-1))**(0.5))
-            beta_n[b-bmin] = rms[b-bmin]/rmstheory[b-bmin]
+        # Truncate and reshape to (niter, imax, b), then mean over bin members
+        trunc = fake[:, :imax * b]
+        bins = trunc.reshape(niter, imax, b)
+        binned_means = np.nanmean(bins, axis=2)        # (niter, imax)
+        rms = np.nanstd(binned_means, axis=1)          # (niter,)
 
+        # White-noise theoretical RMS
+        rmstheory = sigma1 / np.sqrt(b) * np.sqrt(imax / (imax - 1))
+        beta_n = rms / rmstheory                        # (niter,)
+        betas_per_b.append(beta_n)
 
-        rms = np.array(rms)
-        binsize = np.array(binsize)
-        rmstheory = np.array(rmstheory)
-        beta = np.nanmean(np.array(beta_n))
+    if not betas_per_b:
+        # No valid bin sizes (e.g., ultra-short segments)
+        return [np.nan] * niter
 
-        
-        # add beta to beta_dist array
-        beta_dist.append(beta)
-    
-    return beta_dist
-    
+    # Stack over bin sizes → (niter, n_b) and take nanmedian over bin sizes
+    betas_per_b = np.stack(betas_per_b, axis=1)
+    beta = np.nanmedian(betas_per_b, axis=1)           # (niter,)
+
+    # Return as a plain list to match your downstream usage
+    return beta.tolist()
+
     
     
     
@@ -104,74 +111,58 @@ def pad_with_nans(x, y, yerr):
 
 def binning_outlier_detection(x, y, yerr, beta_dist_MC, max_sigma=3):
     """
-    test how much the DW statistic for a detrended LC is an outlier (in terms of sigma) 
-    for a single epoch LC in time series data.
-
-    Parameters:
-    - x (array): Time values.
-    - y (array): Detrended flux values assuming centered on zero.
-
-    Returns:
-    - sigma (float): what sigma value is the DW for a given epoch vs. white noise
+    Compute beta for the real series and compare to a one-sided Gaussian cutoff
+    derived from the MC beta distribution.
+    - Always bmin = 1, bmax = N//10
+    - Uses np.nanmedian across bin sizes
+    - One-sided cutoff via erf (e.g., 3σ ⇒ 99.865th percentile)
     """
-    
-    
-    
-    bmin = 2
-    bmax = int(len(x)/10) # Maximum bin size to try
-    binsize = [0 for i in range(bmin,bmax+1)] # Initialize binsize array
-    rms = [0 for i in range(bmin,bmax+1)] # Initialize rms array
-    rmstheory = [0 for i in range(bmin,bmax+1)] # Initialize rmstheory array
-    beta_n = [0 for i in range(bmin,bmax+1)] # Initialize beta_n array
-    
+    y = np.asarray(y, dtype=float)
+    N = y.shape[0]
+    if N == 0:
+        return False, np.nan, np.nan
+
+    bmax = max(1, N // 10)
     sigma_1 = np.nanstd(y)
-    
-    for b in range(bmin,bmax+1):
-        # Create a binned time series of the data = "binned"
-        imax = int( np.floor(len(x)/b) ) # Length of the new binned array
 
-        binned = [0 for i in range(imax)]      # Initialize this new array
-        for i in range(imax):
-            binned[i] = np.nanmean(y[b*i+1:(i+1)*b])
+    beta_n_list = []
+    for b in range(1, bmax + 1):
+        imax = N // b
+        if imax < 2:
+            continue
 
-        # Compute the r.m.s. of this binned time series
-        rms[b-bmin] = np.nanstd(binned)
-        binsize[b-bmin] = b
-        rmstheory[b-bmin] = (sigma_1*b**(-0.5)*(imax/(imax-1))**(0.5))
-        beta_n[b-bmin] = rms[b-bmin]/rmstheory[b-bmin]
+        trunc = y[:imax * b]
+        bins = trunc.reshape(imax, b)
+        binned_means = np.nanmean(bins, axis=1)
+        rms = np.nanstd(binned_means)
+        rmstheory = sigma_1 / np.sqrt(b) * np.sqrt(imax / (imax - 1))
+        beta_n_list.append(rms / rmstheory)
 
-    rms = np.array(rms)
-    binsize = np.array(binsize)
-    rmstheory = np.array(rmstheory)
-    beta = np.nanmean(np.array(beta_n))
-    
-    
-    
-    
-    # Calculate the error function term
-    # determine how far from 50th percentile we allow for based on max sigma
-    erf_term = 0.5 * erf(max_sigma / np.sqrt(2))
+    if not beta_n_list:
+        beta = np.nan
+    else:
+        beta = np.nanmedian(np.array(beta_n_list))
 
-    # Calculate the quantile bounds
-    #lower_bound = np.quantile(beta_dist_MC, 0.5 - erf_term)
-    upper_bound = np.quantile(beta_dist_MC, 0.5 + erf_term)
+    # One-sided N-sigma percentile via erf (e.g., N=3 ⇒ q≈0.99865)
+    erf_term = 0.5 * erf(max_sigma / np.sqrt(2.0))
+    q = 0.5 + erf_term
 
-    # Test whether r_squared is within the bounds
-    is_within_bounds = beta <= upper_bound
-    
-    #print(beta)
-    #print(beta_dist_MC)
-    #print('')
+    # Robust to empty/NaN MC input
+    beta_dist_MC = np.asarray(beta_dist_MC, dtype=float)
+    if beta_dist_MC.size == 0 or not np.isfinite(beta_dist_MC).any():
+        upper_bound = np.nan
+        is_within_bounds = False
+    else:
+        upper_bound = np.quantile(beta_dist_MC, q)
+        is_within_bounds = (beta <= upper_bound)
 
-
-        
-    
     return is_within_bounds, beta, upper_bound
 
 
 
 
-def reject_via_binning(time_epochs, y_epochs, yerr_epochs, t0s, period, duration, niter):
+
+def reject_via_binning(time_epochs, y_epochs, yerr_epochs, t0s, period, duration, niter=100000):
     print('')
     print("starting individual model rejection via binning vs. RMS test:")
     print("--------------------------------------------------")
@@ -230,7 +221,7 @@ def reject_via_binning(time_epochs, y_epochs, yerr_epochs, t0s, period, duration
     print("Execution time:", execution_time, "seconds")
 
 
-    columns = ['local SAP', 'local PDCSAP', 'polyAM SAP', 'polyAM PDCSAP', 'GP SAP', 'GP PDCSAP', 'CoFiAM SAP', 'CoFiAM PDCSAP']
+    columns = y_epochs[ii].columns
     sigma_test = pd.DataFrame(is_within_bounds_epochs, columns=columns)
     
     return sigma_test, beta_dist_MC_epochs, beta_detrended_epochs, upper_bound_epochs
@@ -258,7 +249,7 @@ def binning_rejection_plots(beta_dist_MC_epochs, beta_detrended_epochs, upper_bo
 
         plt.figure(figsize=[9,7])
         plt.hist(beta_dist_MC_epochs[ii], bins=100, density=True, histtype='step', color='k', linewidth=1, alpha=.7,
-                 label = r'White Noise Monte Carlo $R^2$')
+                 label = r'White Noise Monte Carlo $\hat{\beta}$')
 
         for jj in range(0, len(beta_detrended_epochs[ii])):
 
