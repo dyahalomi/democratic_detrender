@@ -256,7 +256,7 @@ def cofiam_method(x, y, yerr, mask, mask_fitted_planet, t0s, duration, period, l
             cofiam_mod_all.extend(best_model)
 
         except Exception as e:
-            print(f"CoFiAM failed for the {ii}th epoch: {e}")
+            print(f"CoFiAM failed for the {ii+1}th epoch: {e}")
             # CoFiAM failed for this epoch, just add nans of the same size
             nan_array = np.empty(np.shape(y_ii))
             nan_array[:] = np.nan
@@ -315,7 +315,7 @@ def cofiam_method(x, y, yerr, mask, mask_fitted_planet, t0s, duration, period, l
             y_out_detrended.append(y_ii_linear_detrended)
 
         except Exception as e:
-            print(f"CoFiAM failed for the {ii}th epoch at the linear step: {e}")
+            print(f"CoFiAM failed for the {ii+1}th epoch at the linear step: {e}")
             # CoFiAM failed for this epoch, just add nans of the same size
             nan_array = np.empty(np.shape(y_ii))
             nan_array[:] = np.nan
