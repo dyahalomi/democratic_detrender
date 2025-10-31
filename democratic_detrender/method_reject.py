@@ -11,31 +11,22 @@ from democratic_detrender.method_rejection_functions_general import ensemble_ste
 
 
 
-def method_reject(path, detrended_lc_file, orbital_data_file, t0s_file,
-    input_depth=0.01, input_period=None, input_t0=None, input_duration=None, input_mask_width=1.1, 
-    input_show_plots=False, input_dont_bin=False, input_use_sap_problem_times=False, 
-    input_no_pdc_problem_times=True, input_user_light_curve=None,
-    input_polyAM=True, input_CoFiAM=True, input_GP=True, input_local=True):
+def method_reject(path, input_depth=0.01, input_period=None, input_duration=None, input_mask_width=1.1):
     
     
 
     # Load the file into a Pandas DataFrame, skipping the first column
-    df = pd.read_csv(path+detrended_lc_file)
+    df = pd.read_csv(path+'detrended.csv')
 
+    orbital_data = pd.read_csv(path+'orbital_data.csv')
 
-    #df, t0s, period, duration  = detrend_all(input_id, mission, flux_type, input_planet_number, input_dir,
-    #input_depth, input_period, input_t0, input_duration, input_mask_width, 
-    #input_show_plots, input_dont_bin, input_use_sap_problem_times, 
-    #input_no_pdc_problem_times, input_user_light_curve,
-    #input_polyAM, input_CoFiAM, input_GP, input_local)
+    if input_period == None:
+        period = orbital_data['period']
+    
+    if input_duration == None:
+        duration = orbital_data['duration']
 
-    orbital_data = pd.read_csv(path+orbital_data_file)
-    t0s = pd.read_csv(path+t0s_file)
-
-    period = orbital_data['period']
-    duration = orbital_data['duration']
-
-    t0s = list(pd.read_csv(path+t0s_file)['t0s_in_data'])
+    t0s = list(pd.read_csv(path+'t0s.csv')['t0s_in_data'])
 
     # Fixed columns
     fixed_cols = ['time', 'yerr', 'mask', 'method marginalized']
@@ -137,12 +128,14 @@ def method_reject(path, detrended_lc_file, orbital_data_file, t0s_file,
 
         
     # plot all detrended data
+    # mask width already inflated in method rejection step so mask_width=1
     plot_detrended_lc(times_all_post_rej, y_all_post_rej, detrending_methods,
                       t0s, float(6*duration)/period/input_mask_width, period,
-                      colors, duration*24., depth=0.01, mask_width=1,
+                      colors, duration*24., depth=input_depth, mask_width=1,
                       figname = path+'/individual_detrended_post_rejection.pdf')
 
     # plot method marginalized detrended data
+    # mask width already inflated in method rejection step so mask_width=1
     plot_detrended_lc(
         times_all_post_rej,
         [detrend_df_post_rej["method marginalized"]],
@@ -151,7 +144,7 @@ def method_reject(path, detrended_lc_file, orbital_data_file, t0s_file,
         float(6*duration)/period/input_mask_width, 
         period,
         ["k"], 
-        duration*24., depth=0.01, mask_width=1,
+        duration*24., depth=input_depth, mask_width=1,
         figname=path + "/" + "method_marg_detrended_post_rejection.pdf"
             )
 
