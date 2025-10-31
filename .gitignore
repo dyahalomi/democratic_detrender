@@ -30,6 +30,9 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# setuptools_scm version file
+democratic_detrender/_version.py
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -164,3 +167,4 @@ cython_debug/
 #.idea/
 
 *.DS_Store
+*.pdf
