@@ -168,6 +168,9 @@ def ensemble_step(
     else:
         yerr_detrended_arr = np.array(yerr_detrended, dtype=float)
         if yerr_detrended_arr.shape != (n_times,):
+            print('shape', np.shape(yerr_detrended_arr))
+            print((n_times,))
+            print(yerr_detrended_arr)
             raise ValueError(
                 "yerr_detrended must be 1D with shape (n_times,)"
             )

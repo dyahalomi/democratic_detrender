@@ -33,6 +33,11 @@ def detrend_all(
          input_detrend_methods.append("local")
 
 
+    print('sdfasf')
+    print(input_detrend_methods)
+    print('asdfadf')
+
+
     #determine how to handle PDC if no problem times identified
     if input_use_sap_problem_times:
         input_problem_times_default = "use_sap"

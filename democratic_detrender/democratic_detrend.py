@@ -41,11 +41,30 @@ def democratic_detrend(input_id, mission, flux_type='both', input_planet_number=
         path = input_dir
 
 
-    df, t0s, period, duration  = detrend_all(input_id, mission, flux_type, input_planet_number, input_dir,
-    input_depth, input_period, input_t0, input_duration, input_mask_width, 
-    input_show_plots, input_dont_bin, input_use_sap_problem_times, 
-    input_no_pdc_problem_times, input_user_light_curve,
-    input_polyAM, input_CoFiAM, input_GP, input_local)
+
+    df, t0s, period, duration = detrend_all(
+    input_id,
+    mission,
+    flux_type=flux_type,
+    input_planet_number=input_planet_number,
+    input_dir=input_dir,
+    input_depth=input_depth,
+    input_period=input_period,
+    input_t0=input_t0,
+    input_duration=input_duration,
+    input_mask_width=input_mask_width,
+    input_show_plots=input_show_plots,
+    input_dont_bin=input_dont_bin,
+    input_use_sap_problem_times=input_use_sap_problem_times,
+    input_no_pdc_problem_times=input_no_pdc_problem_times,
+    input_user_light_curve=input_user_light_curve,
+    input_polyAM=input_polyAM,
+    input_CoFiAM=input_CoFiAM,
+    input_GP=input_GP,
+    input_local=input_local
+)
+
+
 
 
     detrend_df_post_rej = method_reject(path, input_depth, input_period, input_duration, input_mask_width)

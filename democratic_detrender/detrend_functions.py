@@ -555,6 +555,9 @@ def detrend_one_lc(lc_values, save_dir, pop_out_plots, detrend_methods):
     # pdc_mask_fitted_planet_epochs, pdc_problem_times, pdc_t0s, pdc_period, \
     # pdc_duration, pdc_cadence]
 
+    print(detrend_methods)
+    print('here^')
+
     detrend_methods_out, detrended_lc_vals = detrend_variable_methods(
         x_epochs=lc_values[0],
         y_epochs=lc_values[1],
