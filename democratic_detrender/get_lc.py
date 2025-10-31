@@ -38,16 +38,16 @@ def tic_id_from_simbad(other_id):
         return None
 
     # Convert the 'ID' column to string
-    ID_table["ID"] = ID_table["ID"].astype(str)
+    ID_table["id"] = ID_table["id"].astype(str)
 
     # Convert the table to a Pandas DataFrame
     ID_pandas = ID_table.to_pandas()
 
     # Filter for TIC IDs
-    tic_id = ID_pandas[ID_pandas["ID"].str.contains("TIC")]
+    tic_id = ID_pandas[ID_pandas["id"].str.contains("TIC")]
 
     # Return the TIC ID, if found
-    return tic_id["ID"].values[0]
+    return tic_id["id"].values[0]
 
 
 def tic_id_from_exoplanet_archive(other_id):

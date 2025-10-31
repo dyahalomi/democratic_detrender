@@ -1,43 +1,47 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
 authors = [{name = "Daniel Yahalomi"}]
 name = "democratic_detrender"
 dynamic = ["version"]
-requires-python = "<3.11" # TODO
-# TODO
-# python<=3.10, 3.11 broke with pymc3
-# pymc>=4
-# exoplanet[pymc]
+requires-python = ">=3.9"
 dependencies = [
     "numpy",  
     "scipy",  
     "pandas",  
-    "matplotlib",  
-    "exoplanet[pymc3]",
-    "pymc3",
-    "pymc3_ext",
-    "lightkurve",
-    "celerite2",
-    "ipykernel",
+    "matplotlib",
+    "pymc>=5.0.0",
+    "pymc-ext>=1.0.1",
+    "lightkurve>=2.5.0",
+    "celerite2>=0.3.2",
+    "latex>=0.7.0",
 ]
-license = {text = "MIT"}
+license = "MIT"
 keywords = ["astronomy", "exoplanets"]
 description = "An ensemble-based approach to removing nuisance signals from stellar time-series photometry."
 readme = "README.md"
 classifiers = [
-  "Programming Language :: Python",
+  "Development Status :: 4 - Beta",
   "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Topic :: Scientific/Engineering :: Astronomy"
 ]
 
 [project.optional-dependencies]
+notebook = [
+  "ipykernel", 
+  "ipywidgets", 
+]
+
 test = [
     "pytest",
-    "coverage",
-    "coverage-badge",
 ]
 
 docs = [
@@ -52,11 +56,13 @@ docs = [
     "sphinxcontrib.video",
 ]
 
-dev = ["democratic_detrender[test, docs]"]
+dev = ["democratic_detrender[notebook,test,docs]"]
 
 [project.urls]
 Homepage = "https://github.com/dyahalomi/democratic_detrender"
 Documentation = "https://democratic-detrender.readthedocs.io/en/latest/"
+Repository = "https://github.com/dyahalomi/democratic_detrender"
+"Bug Tracker" = "https://github.com/dyahalomi/democratic_detrender/issues"
 
 [tool.setuptools]
 include-package-data = true
@@ -64,6 +70,9 @@ include-package-data = true
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["democratic_detrender"]
+
+[tool.setuptools_scm]
+write_to = "democratic_detrender/_version.py"
 
 [tool.pytest.ini_options]
 testpaths = [
@@ -73,8 +82,10 @@ testpaths = [
 
 [tool.coverage.run]
 omit = [
- "py_template/__init*",
- "*/py_template/__init*",
+ "democratic_detrender/__init*",
+ "*/democratic_detrender/__init*",
+ "democratic_detrender/_version.py",
+ "*/democratic_detrender/_version.py",
  "test/*",
  "*/test/*",
 ]
