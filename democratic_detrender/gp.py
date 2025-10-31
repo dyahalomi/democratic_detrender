@@ -3,12 +3,10 @@
 import numpy as np
 from scipy.interpolate import interp1d
 
-import pymc3 as pm
-import pymc3_ext as pmx
-from celerite2.theano import terms, GaussianProcess
-# TODO: only using theano import for log and warning statements; could remove
-import theano 
-import logging
+import pymc as pm
+import pymc_ext as pmx
+from celerite2.pymc import GaussianProcess
+import celerite2.pymc.terms as terms
 
 from democratic_detrender.manipulate_data import split_around_transits
 from democratic_detrender.helper_functions import get_detrended_lc
@@ -36,31 +34,23 @@ def gp_new(time_star, lc_star, lc_err_star, time_model):
         A dictionary containing the maximum a posteriori solution of the GP fit.
     """
     # Set up the model
-    # ignore theano warnings unless it's an error
-    logger = logging.getLogger("theano.tensor.opt")
-    logger.setLevel(logging.ERROR)
-
-    theano.config.compute_test_value = "warn"
-
     with pm.Model() as model:
-
         rho_gp = pm.InverseGamma(
-            "rho_gp", testval=2.0, **pmx.estimate_inverse_gamma_parameters(1.0, 5.0),
+            "rho_gp", initval=2.0, **pmx.utils.estimate_inverse_gamma_parameters(1.0, 5.0)
         )
 
-        with pm.Model() as model:
-            # The flux zero point
-            mean = pm.Normal("mean", mu=0.0, sigma=10.0)
+        # The flux zero point
+        mean = pm.Normal("mean", mu=0.0, sigma=10.0)
 
-            # Noise parameters
-            med_yerr = np.median(lc_err_star)
-            std_y = np.std(lc_star)
+        # Noise parameters
+        med_yerr = np.median(lc_err_star)
+        std_y = np.std(lc_star)
 
-            sigma_gp = pm.InverseGamma(
-                "sigma_gp",
-                testval=0.5 * std_y,
-                **pmx.estimate_inverse_gamma_parameters(med_yerr, std_y),
-            )
+        sigma_gp = pm.InverseGamma(
+            "sigma_gp",
+            initval=0.5 * std_y,
+            **pmx.utils.estimate_inverse_gamma_parameters(med_yerr, std_y),
+        )
 
         # The Gaussian Process noise model
         kernel = terms.SHOTerm(sigma=sigma_gp, rho=rho_gp, Q=1.0 / 3)
@@ -71,8 +61,7 @@ def gp_new(time_star, lc_star, lc_err_star, time_model):
         pm.Deterministic("pred", gp.predict(lc_star, t=time_model))
 
         # Optimize the model
-        map_soln = model.test_point
-        map_soln = pmx.optimize(map_soln)
+        map_soln = pmx.optimize()
 
         return map_soln
 
@@ -106,8 +95,6 @@ def gp_method(x, y, yerr, mask, mask_fitted_planet, t0s, duration, period):
     detrended_lc : array
         The detrended light curve obtained by applying the GP method.
     """
-    theano.config.compute_test_value = "warn"
-
     gp_mod = []
     gp_mod_all = []
 
