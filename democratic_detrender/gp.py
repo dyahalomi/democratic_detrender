@@ -5,8 +5,8 @@ from scipy.interpolate import interp1d
 
 import pymc as pm
 import pymc_ext as pmx
-from celerite2 import terms, GaussianProcess
-import logging
+from celerite2.pymc import GaussianProcess
+import celerite2.pymc.terms as terms
 
 from democratic_detrender.manipulate_data import split_around_transits
 from democratic_detrender.helper_functions import get_detrended_lc
