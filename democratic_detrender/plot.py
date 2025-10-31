@@ -7,11 +7,11 @@ import pandas as pd
 from matplotlib.widgets import Slider, Button
 from democratic_detrender.helper_functions import bin_data
 
-# import matplotlib
-# matplotlib.rc("xtick", labelsize=27)
-# matplotlib.rc("ytick", labelsize=27)
-# matplotlib.rc("font", **{"family": "serif", "serif": ["Computer Modern"]})
-# matplotlib.rc("text", usetex=True)
+import matplotlib
+matplotlib.rc("xtick", labelsize=27)
+matplotlib.rc("ytick", labelsize=27)
+matplotlib.rc("font", **{"family": "serif", "serif": ["Computer Modern"]})
+matplotlib.rc("text", usetex=True)
 
 def plot_transit(
     xs_star,
