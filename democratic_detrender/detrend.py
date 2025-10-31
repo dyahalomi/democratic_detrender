@@ -1,574 +1,705 @@
+from datetime import date
 import numpy as np
-import time
+import pandas as pd
+from scipy.stats import median_abs_deviation
+import os
+import warnings
 
-from democratic_detrender.cofi_AM import cofiam_method
-from democratic_detrender.poly_AM import polynomial_method
-from democratic_detrender.poly_local import local_method
-from democratic_detrender.gp import gp_method
-from democratic_detrender.plot import plot_individual_outliers
-from democratic_detrender.manipulate_data import split_around_transits
-from democratic_detrender.outlier_rejection import reject_outliers_everywhere
-from democratic_detrender.helper_functions import find_nearest
 
-def trim_jump_times(x, y, yerr, mask, mask_fitted_planet, t0s, period, jump_times):
-    """
-    Trim light curve around the labeled jump (ie. problem) times in time series data.
+from democratic_detrender.find_flux_jumps import find_flux_jumps, find_sap_and_pdc_flux_jumps
+from democratic_detrender.get_lc import get_light_curve
+from democratic_detrender.manipulate_data import add_nans_for_missing_data
+from democratic_detrender.plot import plot_detrended_lc, plot_phase_fold_lc
+from democratic_detrender.detrend_functions import detrend_sap_and_pdc, detrend_one_lc
 
-    Parameters:
-        x (array): Time values.
-        y (array): Flux values.
-        yerr (array): Flux error values.
-        mask (array): Mask array.
-        mask_fitted_planet (array): Mask array for fitted planet.
-        t0s (array): Midtransit times.
-        period (float): Planet period to help split data around transits.
-        jump_times (list): List of jump times to trim around transits.
+def detrend_all(
+    input_id, mission, flux_type='both', input_planet_number=1, input_dir='./',
+    input_depth=0.01, input_period=None, input_t0=None, input_duration=None, input_mask_width=1.1, 
+    input_show_plots=False, input_dont_bin=False, input_use_sap_problem_times=False, 
+    input_no_pdc_problem_times=True, input_user_light_curve=None, ensemble_statistic = "median",
+    input_polyAM=True, input_CoFiAM=True, input_GP=True, input_local=True):
 
-    Returns:
-        Tuple of arrays containing trimmed time series data:
-            x_epochs (array): Trimmed time values.
-            y_epochs (array): Trimmed flux values.
-            yerr_epochs (array): Trimmed flux error values.
-            mask_epochs (array): Trimmed mask array.
-            mask_fitted_planet_epochs (array): Trimmed mask array for fitted planet.
-    """
 
-    if jump_times != []:
-        x_epochs = []
-        y_epochs = []
-        yerr_epochs = []
-        mask_epochs = []
-        mask_fitted_planet_epochs = []
+    # which detrending methods will we use?
+    input_detrend_methods = []
+    if input_GP:
+         input_detrend_methods.append("GP")
+    if input_CoFiAM:
+         input_detrend_methods.append("CoFiAM")
+    if input_polyAM:
+         input_detrend_methods.append("polyAM")
+    if input_local:
+         input_detrend_methods.append("local")
 
-        # making this so that minimum of two jump times per epoch isn't needed
 
-        (
-            x_transits,
-            y_transits,
-            yerr_transits,
-            mask_transits,
-            mask_fitted_planet_transits,
-        ) = split_around_transits(
-            x, y, yerr, mask, mask_fitted_planet, t0s, 1.0 / 2.0, period
+    #determine how to handle PDC if no problem times identified
+    if input_use_sap_problem_times:
+        input_problem_times_default = "use_sap"
+    else:
+        input_problem_times_default = None
+
+
+    # checks mission input arguments
+    if mission == "TESS":
+        tess_bool = True
+        kepler_bool = False
+    elif mission == "Kepler":
+        tess_bool = False  
+        kepler_bool = True
+    else:
+        print('ERROR, CURRENTLY FULL DEMOCRATIC_DETREND FUNCTION ONLY SETUP TO RUN FOR KEPLER OR TESS LCs')
+        print('SEE TUTORIAL FOR LOADING YOUR OWN LCs INTO THE DETRENDER')
+        return None 
+
+
+
+    # determine the path to directory to load and save files
+    if input_dir == "./":
+        today = date.today()
+        current_day = today.strftime("%B_%d_%Y")
+
+        foldername = (
+            input_id
+            + "/"
+            + input_id
+            + ".0"
+            + str(input_planet_number)
+            + "/"
+            + "detrending"
+            + "/"
+            + current_day
         )
-        if len(mask_transits) == 1:
-            mask_transits = np.array(mask_transits, dtype=bool)
-            mask_fitted_planet_transits = np.array(
-                mask_fitted_planet_transits, dtype=bool
+        path = os.path.join(input_dir, foldername)
+
+        os.makedirs(path, exist_ok=True)
+
+    else:
+        path = input_dir
+
+
+
+
+    # check if we should run both pdc and sap flux
+    if flux_type == "both":
+
+        
+        # check if detrended lc already exist
+        detrendec_lc_saved = path + '/detrended.csv'
+
+
+        if os.path.exists(detrendec_lc_saved):
+            print('detrended lc for '+input_id+' planet number '+str(input_planet_number)+' found')
+            detrend_df = pd.read_csv(detrendec_lc_saved)
+            x_detrended = detrend_df['time']
+            sap_detrend_sep_lc = [detrend_df['local SAP'], detrend_df['polyAM SAP'], detrend_df['GP SAP'], detrend_df['CoFiAM SAP']]
+            pdc_detrend_sep_lc = [detrend_df['local PDCSAP'], detrend_df['polyAM PDCSAP'], detrend_df['GP PDCSAP'], detrend_df['CoFiAM PDCSAP']]
+            yerr_detrended = detrend_df['yerr']
+            mask_detrended = detrend_df['mask']
+
+
+
+            #this just pulls in period and duration from exofop for plotting purposes
+            _, _, _, _, _, pdc_t0s, pdc_period, pdc_duration, _, _, _ = \
+            get_light_curve(input_id, 'pdcsap_flux', planet_number = input_planet_number, TESS=tess_bool, Kepler=kepler_bool)
+
+        else:
+            #pulls in light curve
+            [
+                [
+                    sap_x_epochs,
+                    sap_y_epochs,
+                    sap_yerr_epochs,
+                    sap_mask_epochs,
+                    sap_mask_fitted_planet_epochs,
+                    sap_problem_times,
+                    sap_t0s,
+                    sap_period,
+                    sap_duration,
+                    sap_cadence,
+                ],
+                [
+                    pdc_x_epochs,
+                    pdc_y_epochs,
+                    pdc_yerr_epochs,
+                    pdc_mask_epochs,
+                    pdc_mask_fitted_planet_epochs,
+                    pdc_problem_times,
+                    pdc_t0s,
+                    pdc_period,
+                    pdc_duration,
+                    pdc_cadence,
+                ],
+            ] = find_sap_and_pdc_flux_jumps(
+                input_id,
+                path + "/",
+                show_plots=input_show_plots,
+                TESS=tess_bool,
+                Kepler=kepler_bool,
+                planet_number=input_planet_number,
+                user_periods=input_period,
+                user_t0s=input_t0,
+                user_durations=input_duration,
+                mask_width=input_mask_width,
+                dont_bin=input_dont_bin,
+                problem_times_default=input_problem_times_default,
+                no_pdc_problem_times=input_no_pdc_problem_times,
+                user_light_curve=input_user_light_curve
             )
 
-        for ii in range(0, len(t0s)):
-            t0 = t0s[ii]
-            xs = x_transits[ii]
-            ys = y_transits[ii]
-            yerrs = yerr_transits[ii]
-            masks = mask_transits[ii]
-            mask_fitted_planets = mask_fitted_planet_transits[ii]
+            # now for detrending!
+            print("")
+            print("")
+            print("detrending now")
+            print("--------------")
+            print("")
 
-            epoch_jump_times = []
-            for j in range(len(jump_times)):
-                if (
-                    jump_times[j] >= xs[0] and jump_times[j] <= xs[-1]
-                ):  # if jump time falls within time range of epoch
-                    epoch_jump_times.append(jump_times[j])
+            detrended_lc_all_vals = detrend_sap_and_pdc(
+                sap_values=[
+                    sap_x_epochs,
+                    sap_y_epochs,
+                    sap_yerr_epochs,
+                    sap_mask_epochs,
+                    sap_mask_fitted_planet_epochs,
+                    sap_problem_times,
+                    sap_t0s,
+                    sap_period,
+                    sap_duration,
+                    sap_cadence,
+                ],
+                pdc_values=[
+                    pdc_x_epochs,
+                    pdc_y_epochs,
+                    pdc_yerr_epochs,
+                    pdc_mask_epochs,
+                    pdc_mask_fitted_planet_epochs,
+                    pdc_problem_times,
+                    pdc_t0s,
+                    pdc_period,
+                    pdc_duration,
+                    pdc_cadence,
+                ],
+                save_dir=path + "/",
+                pop_out_plots=input_show_plots,
+                detrend_methods=input_detrend_methods,
+            )
 
-            # should be in time order anyway
-            # there should be a max of two per epoch
-            if len(epoch_jump_times) == 2:  # if we have two jump times in this epoch
-                jump_start = find_nearest(
-                    xs, epoch_jump_times[0]
-                )  # selecting all data in between jump times
-                jump_end = find_nearest(xs, epoch_jump_times[1])
+            sap_detrend_methods_out = detrended_lc_all_vals[0]
+            pdc_detrend_methods_out = detrended_lc_all_vals[1]
 
-            # if there is only 1 jump time, then we either keep all data before or after the transit
-            elif len(epoch_jump_times) == 1:
+            # now add nans, in order to make sure pdc and sap arrays are the same length
 
-                if t0 < epoch_jump_times[0]:  # t0 is before first jump time
-                    jump_start = xs[0]  # keep all data before transit
-                    jump_end = find_nearest(
-                        xs, epoch_jump_times[0]
-                    )  # last datapoint is the jumptime
-                elif t0 > epoch_jump_times[0]:  # t0 is after first jump time
-                    jump_start = find_nearest(
-                        xs, epoch_jump_times[0]
-                    )  # keep all data after first jumptime
-                    jump_end = xs[-1]  # keep all data after transit
-                else:  # t0 = jump time... this shouldn't happen so raise an exception
-                    raise Exception(
-                        "Your problem time appears to be mislabeled for epoch "
-                        + str(ii + 1)
-                        + ". Go back and relabel."
-                    )
-                    return None
+            (
+                x_detrended,
+                sap_detrend_sep_lc,
+                pdc_detrend_sep_lc,
+                yerr_detrended,
+                mask_detrended,
+                mask_fitted_planet_detrended,
+            ) = add_nans_for_missing_data(
+                detrended_lc_all_vals[2][0],
+                [
+                    detrended_lc_all_vals[2][5],
+                    detrended_lc_all_vals[2][8],
+                    detrended_lc_all_vals[2][11],
+                    detrended_lc_all_vals[2][14],
+                ],
+                detrended_lc_all_vals[2][2],
+                detrended_lc_all_vals[2][3],
+                detrended_lc_all_vals[2][4],
+                detrended_lc_all_vals[3][0],
+                [
+                    detrended_lc_all_vals[3][5],
+                    detrended_lc_all_vals[3][8],
+                    detrended_lc_all_vals[3][11],
+                    detrended_lc_all_vals[3][14],
+                ],
+                detrended_lc_all_vals[3][2],
+                detrended_lc_all_vals[3][3],
+                detrended_lc_all_vals[3][4],
+            )
 
-            elif len(epoch_jump_times) == 0:  # no jump times for this epoch
-                jump_start = xs[0]  # selecting all data
-                jump_end = xs[-1]
+            ## now to plot and save data!!
+            green2, green1 = "#355E3B", "#18A558"
+            blue2, blue1 = "#000080", "#4682B4"
+            purple2, purple1 = "#2E0854", "#9370DB"
+            red2, red1 = "#770737", "#EC8B80"
 
-            else:  # too many problem times
-                raise Exception(
-                    "Too many problem times for epoch "
-                    + str(ii + 1)
-                    + ". Go back and relabel."
-                )
-                return None
+            colors = [red1, red2, blue1, blue2, green1, green2, purple1, purple2]
 
-            # # assuming all went well
-            epoch_split = [jump_start, jump_end]
-            start_index = int(np.where(xs == epoch_split[0])[0])
-            end_index = int(np.where(x == epoch_split[1])[0])
+            y_detrended = [
+                sap_detrend_sep_lc[0],
+                pdc_detrend_sep_lc[0],
+                sap_detrend_sep_lc[1],
+                pdc_detrend_sep_lc[1],
+                sap_detrend_sep_lc[2],
+                pdc_detrend_sep_lc[2],
+                sap_detrend_sep_lc[3],
+                pdc_detrend_sep_lc[3],
+            ]
 
-            # now to append current epoch's trimmed (if applicable) data to epoch arrays
-            x_epochs.append(xs[start_index:end_index])
-            y_epochs.append(ys[start_index:end_index])
-            yerr_epochs.append(yerrs[start_index:end_index])
-            mask_epochs.append(masks[start_index:end_index])
-            mask_fitted_planet_epochs.append(mask_fitted_planets[start_index:end_index])
+            detrend_label = [
+                "local SAP",
+                "local PDCSAP",
+                "polyAM SAP",
+                "polyAM PDCSAP",
+                "GP SAP",
+                "GP PDCSAP",
+                "CoFiAM SAP",
+                "CoFiAM PDCSAP",
+            ]
 
-        # wrapping it all up!
-        x_epochs = np.array(x_epochs, dtype=object)
-        y_epochs = np.array(y_epochs, dtype=object)
-        yerr_epochs = np.array(yerr_epochs, dtype=object)
-        mask_epochs = np.array(mask_epochs, dtype=object)
-        mask_fitted_planet_epochs = np.array(mask_fitted_planet_epochs, dtype=object)
+            '''
+            y_detrended = np.array(y_detrended)
+            y_detrended_transpose = y_detrended.T
 
-    else:
-        (
-            x_epochs,
-            y_epochs,
-            yerr_epochs,
-            mask_epochs,
-            mask_fitted_planet_epochs,
-        ) = split_around_transits(
-            x, y, yerr, mask, mask_fitted_planet, t0s, 1.0 / 2.0, period
+            method_marg_detrended = np.nanmedian(y_detrended_transpose, axis=1)
+            MAD = median_abs_deviation(
+                y_detrended_transpose, axis=1, scale=1 / 1.4826, nan_policy="omit"
+            )
+
+            yerr_detrended = np.sqrt(yerr_detrended.astype(float) ** 2 + MAD ** 2)
+            '''
+            method_marg_detrended, yerr_detrended = ensemble_step(
+            y_detrended,          # shape (n_times, n_methods)
+            yerr_detrended,       # shape (n_times,)
+            method=ensemble_statistic
+            )
+
+            # save detrend data as csv
+            detrend_dict = {}
+
+            detrend_dict["time"] = x_detrended
+            detrend_dict["yerr"] = yerr_detrended
+            detrend_dict["mask"] = mask_detrended
+            detrend_dict["method marginalized"] = method_marg_detrended
+
+            for ii in range(0, len(y_detrended)):
+                detrend = y_detrended[ii]
+                label = detrend_label[ii]
+                detrend_dict[label] = detrend
+
+            detrend_df = pd.DataFrame(detrend_dict)
+
+            detrend_df.to_csv(path + "/" + "detrended.csv", index=False)
+
+            # plot all detrended data
+            plot_detrended_lc(
+                x_detrended,
+                y_detrended,
+                detrend_label,
+                pdc_t0s,
+                float(6 * pdc_duration / (24.0)) / pdc_period,
+                pdc_period,
+                colors,
+                pdc_duration,
+                depth=input_depth,
+                figname=path + "/" + "individual_detrended_pre_rejection.pdf",
+                mask_width=input_mask_width
+            )
+
+            # plot method marginalized detrended data
+            plot_detrended_lc(
+                x_detrended,
+                [method_marg_detrended],
+                ["method marg"],
+                pdc_t0s,
+                float(6 * pdc_duration / (24.0)) / pdc_period,
+                pdc_period,
+                ["k"],
+                pdc_duration,
+                depth=input_depth,
+                figname=path + "/" + "method_marg_detrended_pre_rejection.pdf",
+                mask_width=input_mask_width
+            )
+
+            # plot binned phase folded lightcurve
+            plot_phase_fold_lc(
+                x_detrended,
+                method_marg_detrended,
+                pdc_period,
+                pdc_t0s,
+                20,
+                figname=path + "/" + "phase_folded.pdf",
+            )
+
+            t0s_out = pdc_t0s
+            period_out = pdc_period
+            duration_out = pdc_duration
+
+    # check if we should run just pdc
+    elif flux_type == "pdc":
+
+        # pulls in light curve
+        [
+            pdc_x_epochs,
+            pdc_y_epochs,
+            pdc_yerr_epochs,
+            pdc_mask_epochs,
+            pdc_mask_fitted_planet_epochs,
+            pdc_problem_times,
+            pdc_t0s,
+            pdc_period,
+            pdc_duration,
+            pdc_cadence,
+        ] = find_flux_jumps(
+            input_id,
+            "pdcsap_flux",
+            path + "/",
+            show_plots=input_show_plots,
+            TESS=tess_bool,
+            Kepler=kepler_bool,
+            planet_number=input_planet_number,
+            user_periods=input_period,
+            user_t0s=input_t0,
+            user_durations=input_duration,
+            mask_width=input_mask_width,
+            no_pdc_problem_times=input_no_pdc_problem_times,
+            dont_bin=input_dont_bin,
+            problem_times_default=input_problem_times_default,
+            user_light_curve=input_user_light_curve
         )
 
-    return x_epochs, y_epochs, yerr_epochs, mask_epochs, mask_fitted_planet_epochs
-
-
-def detrend_variable_methods(
-    x_epochs,
-    y_epochs,
-    yerr_epochs,
-    mask_epochs,
-    mask_fitted_planet_epochs,
-    problem_times,
-    t0s,
-    period,
-    duration,
-    cadence,
-    save_to_directory,
-    show_plots,
-    detrend_methods,
-):
-
-    """
-	Detrend light curves using various methods.
-
-	Parameters:
-	    x_epochs (array): Array of time values for each epoch.
-	    y_epochs (array): Array of flux values for each epoch.
-	    yerr_epochs (array): Array of flux error values for each epoch.
-	    mask_epochs (array): Array of mask values for each epoch.
-	    mask_fitted_planet_epochs (array): Array of mask values for each fitted planet epoch.
-	    problem_times (list): List of jump times to trim structured noise.
-	    t0s (list): List of midtransit times.
-	    period (float): Planet period to define plotting limit.
-	    duration (float): Transit duration.
-	    cadence (float): Cadence of observations.
-	    save_to_directory (str): Directory path to save plots.
-	    show_plots (bool): Whether to display plots.
-	    detrend_methods (list): List of detrending methods to apply.
-
-	Returns:
-	    Tuple containing detrending methods used and output arrays:
-	        detrend_methods_out (list): List of detrending methods applied.
-	        output (list): List of arrays containing detrended and processed data.
-	"""
-
-    (
-        x_trimmed,
-        y_trimmed,
-        yerr_trimmed,
-        mask_trimmed,
-        mask_fitted_planet_trimmed,
-    ) = trim_jump_times(
-        x_epochs,
-        y_epochs,
-        yerr_epochs,
-        mask_epochs,
-        mask_fitted_planet_epochs,
-        t0s,
-        period,
-        problem_times,
-    )
-
-    #### polyam, gp, cofiam friendly mask arrays ####
-
-    friendly_mask_trimmed = []
-    for boolean in range(len(mask_trimmed)):
-        friendly_boolean = mask_trimmed[boolean].astype(bool)
-        friendly_mask_trimmed.append(friendly_boolean)
-
-    friendly_mask_fitted_planet_trimmed = []
-    for boolean in range(len(mask_fitted_planet_trimmed)):
-        friendly_boolean = mask_fitted_planet_trimmed[boolean].astype(bool)
-        friendly_mask_fitted_planet_trimmed.append(friendly_boolean)
-
-    friendly_x_trimmed = []
-    for time_array in range(len(x_trimmed)):
-        friendly_time_array = x_trimmed[time_array].astype(float)
-        friendly_x_trimmed.append(friendly_time_array)
-
-    friendly_y_trimmed = []
-    for flux_array in range(len(y_trimmed)):
-        friendly_flux_array = y_trimmed[flux_array].astype(float)
-        friendly_y_trimmed.append(friendly_flux_array)
-
-    friendly_yerr_trimmed = []
-    for flux_err_array in range(len(yerr_trimmed)):
-        friendly_flux_err_array = yerr_trimmed[flux_err_array].astype(float)
-        friendly_yerr_trimmed.append(friendly_flux_err_array)
-
-    #################################################
-
-    # determine local window values for later use
-    # zoom in around local window
-    (
-        local_x_epochs,
-        local_y_epochs,
-        local_yerr_epochs,
-        local_mask_epochs,
-        local_mask_fitted_planet_epochs,
-    ) = split_around_transits(
-        np.concatenate(x_trimmed, axis=0, dtype=object),
-        np.concatenate(y_trimmed, axis=0, dtype=object),
-        np.concatenate(yerr_trimmed, axis=0, dtype=object),
-        np.concatenate(mask_trimmed, axis=0, dtype=object),
-        np.concatenate(mask_fitted_planet_trimmed, axis=0, dtype=object),
-        t0s,
-        float(6 * duration / (24.0)) / period,
-        period,
-    )
-
-    local_x = np.concatenate(local_x_epochs, axis=0, dtype=object)
-    local_y = np.concatenate(local_y_epochs, axis=0, dtype=object)
-    local_yerr = np.concatenate(local_yerr_epochs, axis=0, dtype=object)
-    local_mask = np.concatenate(local_mask_epochs, axis=0, dtype=object)
-    local_mask_fitted_planet = np.concatenate(
-        local_mask_fitted_planet_epochs, axis=0, dtype=object
-    )
-
-    ####################
-    ####################
-    ####################
-    detrend_methods_success = []
-    # local detrending
-    if "local" in detrend_methods:
-        start = time.time()
-        # try:
+        # now for detrending!
         print("")
-        print("detrending via the local method")
-        local_detrended = local_method(
-            friendly_x_trimmed,
-            friendly_y_trimmed,
-            friendly_yerr_trimmed,
-            friendly_mask_trimmed,
-            friendly_mask_fitted_planet_trimmed,
-            t0s,
-            duration,
-            period,
-        )
-
-        # remove outliers in unmasked local detrended lc
-        local_x_no_outliers, local_detrended_no_outliers = reject_outliers_everywhere(
-            local_x, local_detrended, local_yerr, 5 * cadence, 5, 10
-        )
-
-        plot_individual_outliers(
-            local_x,
-            local_detrended,
-            local_x_no_outliers,
-            local_detrended_no_outliers,
-            t0s,
-            period,
-            float(6 * duration / (24.0)) / period,
-            0.009,
-            save_to_directory + "local_outliers.pdf",
-        )
-
-        end = time.time()
-        print(
-            "local detrending completed in "
-            + str(np.round(end - start, 2))
-            + " seconds"
-        )
-        # detrend_methods_success.append('local')
-
-        # except:
-        # 	end = time.time()
-        # 	print('local detrending failed in ' + str(np.round(end - start, 2)) + ' seconds')
-
-    ####################
-    ####################
-    ####################
-    # polyAM detrending
-    if "polyAM" in detrend_methods:
-        start = time.time()
-        # try:
         print("")
-        print("detrending via the polyAM method")
-        poly_detrended, poly_DWs = polynomial_method(
-            friendly_x_trimmed,
-            friendly_y_trimmed,
-            friendly_yerr_trimmed,
-            friendly_mask_trimmed,
-            friendly_mask_fitted_planet_trimmed,
-            t0s,
-            duration,
-            period,
-            local_x_epochs,
-        )
-
-        # remove outliers in unmasked poly detrended lc
-        poly_x_no_outliers, poly_detrended_no_outliers = reject_outliers_everywhere(
-            local_x, poly_detrended, local_yerr, 5 * cadence, 5, 10
-        )
-
-        plot_individual_outliers(
-            local_x,
-            poly_detrended,
-            poly_x_no_outliers,
-            poly_detrended_no_outliers,
-            t0s,
-            period,
-            float(6 * duration / (24.0)) / period,
-            0.009,
-            save_to_directory + "polyAM_outliers.pdf",
-        )
-
-        end = time.time()
-        print(
-            "polyAM detrending completed in "
-            + str(np.round(end - start, 2))
-            + " seconds"
-        )
-        # detrend_methods_success.append('polyAM')
-
-        # except:
-        # 	end = time.time()
-        # 	print('polyAM detrending failed in ' + str(np.round(end - start, 2)) + ' seconds')
-
-    ####################
-    ####################
-    ####################
-    # gp detrending
-    if "GP" in detrend_methods:
-        start = time.time()
-        # try:
+        print("detrending now")
+        print("--------------")
         print("")
-        print("detrending via the GP method")
-        gp_detrended = gp_method(
-            friendly_x_trimmed,
-            friendly_y_trimmed,
-            friendly_yerr_trimmed,
-            friendly_mask_trimmed,
-            friendly_mask_fitted_planet_trimmed,
-            t0s,
-            duration,
-            period,
+
+        detrended_lc_all_vals = detrend_one_lc(
+            lc_values=[
+                pdc_x_epochs,
+                pdc_y_epochs,
+                pdc_yerr_epochs,
+                pdc_mask_epochs,
+                pdc_mask_fitted_planet_epochs,
+                pdc_problem_times,
+                pdc_t0s,
+                pdc_period,
+                pdc_duration,
+                pdc_cadence,
+            ],
+            save_dir=path + "/",
+            pop_out_plots=input_show_plots,
+            detrend_methods=input_detrend_methods,
         )
 
-        # remove outliers in unmasked gp detrended lc
-        gp_x_no_outliers, gp_detrended_no_outliers = reject_outliers_everywhere(
-            local_x, gp_detrended, local_yerr, 5 * cadence, 5, 10
+        [
+            pdc_local_x,
+            pdc_local_y,
+            pdc_local_yerr,
+            pdc_local_mask,
+            pdc_local_mask_fitted_planet,
+            pdc_local_detrended,
+            pdc_local_x_no_outliers,
+            pdc_local_detrended_no_outliers,
+            pdc_poly_detrended,
+            pdc_poly_x_no_outliers,
+            pdc_poly_detrended_no_outliers,
+            pdc_gp_detrended,
+            pdc_gp_x_no_outliers,
+            pdc_gp_detrended_no_outliers,
+            pdc_cofiam_detrended,
+            pdc_cofiam_x_no_outliers,
+            pdc_cofiam_detrended_no_outliers,
+        ] = detrended_lc_all_vals[1]
+
+        x_detrended = pdc_local_x
+
+        ## now to plot and save data!
+
+        green2, green1 = "#355E3B", "#18A558"
+        blue2, blue1 = "#000080", "#4682B4"
+        purple2, purple1 = "#2E0854", "#9370DB"
+        red2, red1 = "#770737", "#EC8B80"
+
+        colors = [red2, blue2, green2, purple2]
+
+        y_detrended = [
+            pdc_local_detrended,
+            pdc_poly_detrended,
+            pdc_gp_detrended,
+            pdc_cofiam_detrended,
+        ]
+
+        yerr_detrended = pdc_local_yerr
+        mask_detrended = pdc_local_mask
+
+        detrend_label = ["local PDCSAP", "polyAM PDCSAP", "GP PDCSAP", "CoFiAM PDCSAP"]
+
+        '''
+        y_detrended = np.array(y_detrended)
+        y_detrended_transpose = y_detrended.T
+
+        method_marg_detrended = np.nanmedian(y_detrended_transpose, axis=1)
+        MAD = median_abs_deviation(
+            y_detrended_transpose, axis=1, scale=1 / 1.4826, nan_policy="omit"
         )
 
-        plot_individual_outliers(
-            local_x,
-            gp_detrended,
-            gp_x_no_outliers,
-            gp_detrended_no_outliers,
-            t0s,
-            period,
-            float(6 * duration / (24.0)) / period,
-            0.009,
-            save_to_directory + "GP_outliers.pdf",
+        yerr_detrended = np.sqrt(yerr_detrended.astype(float) ** 2 + MAD ** 2)
+        '''
+        method_marg_detrended, yerr_detrended = ensemble_step(
+        y_detrended,          # shape (n_times, n_methods)
+        yerr_detrended,       # shape (n_times,)
+        method=ensemble_statistic
         )
 
-        end = time.time()
-        print(
-            "GP detrending completed in " + str(np.round(end - start, 2)) + " seconds"
+        # save detrend data as csv
+        detrend_dict = {}
+
+        detrend_dict["time"] = x_detrended
+        detrend_dict["yerr"] = yerr_detrended
+        detrend_dict["mask"] = mask_detrended
+        detrend_dict["method marginalized"] = method_marg_detrended
+
+        for ii in range(0, len(y_detrended)):
+            detrend = y_detrended[ii]
+            label = detrend_label[ii]
+            detrend_dict[label] = detrend
+
+        detrend_df = pd.DataFrame(detrend_dict)
+
+        detrend_df.to_csv(path + "/" + "detrended_PDC.csv", index=False)
+
+        # plot all detrended data
+        plot_detrended_lc(
+            x_detrended,
+            y_detrended,
+            detrend_label,
+            pdc_t0s,
+            float(6 * pdc_duration / (24.0)) / pdc_period,
+            pdc_period,
+            colors,
+            pdc_duration,
+            depth=input_depth,
+            figname=path + "/" + "individual_detrended_PDC_pre_rejection.pdf",
+            mask_width=input_mask_width
         )
-        # detrend_methods_success.append('GP')
 
-        # except:
-        # 	end = time.time()
-        # 	print('GP detrending failed in ' + str(np.round(end - start, 2)) + ' seconds')
+        # plot method marginalized detrended data
+        plot_detrended_lc(
+            x_detrended,
+            [method_marg_detrended],
+            ["method marg"],
+            pdc_t0s,
+            float(6 * pdc_duration / (24.0)) / pdc_period,
+            pdc_period,
+            ["k"],
+            pdc_duration,
+            depth=input_depth,
+            figname=path + "/" + "method_marg_detrended_PDC_pre_rejection.pdf",
+            mask_width=input_mask_width
+        )
 
-    ####################
-    ####################
-    ####################
-    # CoFiAM detrending
-    if "CoFiAM" in detrend_methods:
-        start = time.time()
-        # try:
+        # plot binned phase folded lightcurve
+        plot_phase_fold_lc(
+            x_detrended,
+            method_marg_detrended,
+            pdc_period,
+            pdc_t0s,
+            20,
+            figname=path + "/" + "phase_folded_PDC_pre_rejection.pdf",
+        )
+
+        t0s_out = pdc_t0s
+        period_out = pdc_period
+        duration_out = pdc_duration
+
+    # check if we should run just sap
+    elif flux_type == "sap":
+
+        # pulls in light curve
+        [
+            sap_x_epochs,
+            sap_y_epochs,
+            sap_yerr_epochs,
+            sap_mask_epochs,
+            sap_mask_fitted_planet_epochs,
+            sap_problem_times,
+            sap_t0s,
+            sap_period,
+            sap_duration,
+            sap_cadence,
+        ] = find_flux_jumps(
+            input_id,
+            "sap_flux",
+            path + "/",
+            show_plots=input_show_plots,
+            TESS=tess_bool,
+            Kepler=kepler_bool,
+            planet_number=input_planet_number,
+            user_periods=input_period,
+            user_t0s=input_t0,
+            user_durations=input_duration,
+            mask_width=input_mask_width,
+            dont_bin=input_dont_bin,
+            user_light_curve=input_user_light_curve
+        )
+
+        # now for detrending!
         print("")
-        print("detrending via the CoFiAM method")
-        cofiam_detrended, cofiam_DWs = cofiam_method(
-            friendly_x_trimmed,
-            friendly_y_trimmed,
-            friendly_yerr_trimmed,
-            friendly_mask_trimmed,
-            friendly_mask_fitted_planet_trimmed,
-            t0s,
-            duration,
-            period,
-            local_x_epochs,
+        print("")
+        print("detrending now")
+        print("--------------")
+        print("")
+
+        detrended_lc_all_vals = detrend_one_lc(
+            lc_values=[
+                sap_x_epochs,
+                sap_y_epochs,
+                sap_yerr_epochs,
+                sap_mask_epochs,
+                sap_mask_fitted_planet_epochs,
+                sap_problem_times,
+                sap_t0s,
+                sap_period,
+                sap_duration,
+                sap_cadence,
+            ],
+            save_dir=path + "/",
+            pop_out_plots=input_show_plots,
+            detrend_methods=input_detrend_methods,
         )
 
-        # remove outliers in unmasked CoFiAM detrended lc
-        cofiam_x_no_outliers, cofiam_detrended_no_outliers = reject_outliers_everywhere(
-            local_x, cofiam_detrended, local_yerr, 5 * cadence, 5, 10
+        [
+            sap_local_x,
+            sap_local_y,
+            sap_local_yerr,
+            sap_local_mask,
+            sap_local_mask_fitted_planet,
+            sap_local_detrended,
+            sap_local_x_no_outliers,
+            sap_local_detrended_no_outliers,
+            sap_poly_detrended,
+            sap_poly_x_no_outliers,
+            sap_poly_detrended_no_outliers,
+            sap_gp_detrended,
+            sap_gp_x_no_outliers,
+            sap_gp_detrended_no_outliers,
+            sap_cofiam_detrended,
+            sap_cofiam_x_no_outliers,
+            sap_cofiam_detrended_no_outliers,
+        ] = detrended_lc_all_vals[1]
+
+        x_detrended = sap_local_x
+
+        # # now to plot!
+
+        green2, green1 = "#355E3B", "#18A558"
+        blue2, blue1 = "#000080", "#4682B4"
+        purple2, purple1 = "#2E0854", "#9370DB"
+        red2, red1 = "#770737", "#EC8B80"
+
+        colors = [red1, blue1, green1, purple1]
+
+        y_detrended = [
+            sap_local_detrended,
+            sap_poly_detrended,
+            sap_gp_detrended,
+            sap_cofiam_detrended,
+        ]
+
+        yerr_detrended = sap_local_yerr
+        mask_detrended = sap_local_mask
+
+        detrend_label = ["local SAP", "polyAM SAP", "GP SAP", "CoFiAM SAP"]
+
+        '''
+        y_detrended = np.array(y_detrended)
+        y_detrended_transpose = y_detrended.T
+
+        method_marg_detrended = np.nanmedian(y_detrended_transpose, axis=1)
+        MAD = median_abs_deviation(
+            y_detrended_transpose, axis=1, scale=1 / 1.4826, nan_policy="omit"
         )
 
-        plot_individual_outliers(
-            local_x,
-            cofiam_detrended,
-            cofiam_x_no_outliers,
-            cofiam_detrended_no_outliers,
-            t0s,
-            period,
-            float(6 * duration / (24.0)) / period,
-            0.009,
-            save_to_directory + "CoFiAM_outliers.pdf",
+        yerr_detrended = np.sqrt(yerr_detrended.astype(float) ** 2 + MAD ** 2)
+        '''
+        method_marg_detrended, yerr_detrended = ensemble_step(
+        y_detrended,          # shape (n_times, n_methods)
+        yerr_detrended,       # shape (n_times,)
+        method=ensemble_statistic
         )
 
-        end = time.time()
-        print("CoFiAM completed in " + str(np.round(end - start, 2)) + " seconds")
-        # detrend_methods_success.append('CoFiAM')
+        # saving detrend data as csv
+        detrend_dict = {}
 
-        # except:
-        # 	end = time.time()
-        # 	print('CoFiAM detrending failed in ' + str(np.round(end - start, 2)) + ' seconds')
+        detrend_dict["time"] = x_detrended
+        detrend_dict["yerr"] = yerr_detrended
+        detrend_dict["mask"] = mask_detrended
+        detrend_dict["method marginalized"] = method_marg_detrended
 
-    output = [local_x, local_y, local_yerr, local_mask, local_mask_fitted_planet]
-    nan_array = np.empty(np.shape(local_x))
-    nan_array[:] = np.nan
-    detrend_methods_out = []
-    if "local" in detrend_methods:
-        detrend_methods_out.append("local")
-        output.append(local_detrended)
-        output.append(local_x_no_outliers)
-        output.append(local_detrended_no_outliers)
+        for ii in range(0, len(y_detrended)):
+            detrend = y_detrended[ii]
+            label = detrend_label[ii]
+            detrend_dict[label] = detrend
+
+        detrend_df = pd.DataFrame(detrend_dict)
+
+        detrend_df.to_csv(path + "/" + "detrended_SAP.csv", index=False)
+
+        # plot all detrended data
+        plot_detrended_lc(
+            x_detrended,
+            y_detrended,
+            detrend_label,
+            sap_t0s,
+            float(6 * sap_duration / (24.0)) / sap_period,
+            sap_period,
+            colors,
+            sap_duration,
+            depth=input_depth,
+            figname=path + "/" + "individual_detrended_SAP_pre_rejection.pdf",
+            mask_width=input_mask_width
+        )
+
+        # plot method marginalized detrended data
+        plot_detrended_lc(
+            x_detrended,
+            [method_marg_detrended],
+            ["method marg"],
+            sap_t0s,
+            float(6 * sap_duration / (24.0)) / sap_period,
+            sap_period,
+            ["k"],
+            sap_duration,
+            depth=input_depth,
+            figname=path + "/" + "method_marg_detrended_SAP_pre_rejection.pdf",
+            mask_width=input_mask_width
+        )
+
+        # plot binned phase folded lightcurve
+        plot_phase_fold_lc(
+            x_detrended,
+            method_marg_detrended,
+            sap_period,
+            sap_t0s,
+            20,
+            figname=path + "/" + "phase_folded_SAP.pdf",
+        )
+
+        t0s_out = sap_t0s
+        period_out = sap_period
+        duration_out = sap_duration
+
+
     else:
-        output.append(nan_array)
-        output.append(nan_array)
-        output.append(nan_array)
+        print("ERROR!")
+        print("invalid flux_type value entered...options are: pdc, sap, or both")
+        return None
 
-    if "polyAM" in detrend_methods:
-        detrend_methods_out.append("polyAM")
-        output.append(poly_detrended)
-        output.append(poly_x_no_outliers)
-        output.append(poly_detrended_no_outliers)
-    else:
-        output.append(nan_array)
-        output.append(nan_array)
-        output.append(nan_array)
+    orbital_data = pd.DataFrame({
+    'period': period_out,
+    'duration': duration_out,
+    })
 
-    if "GP" in detrend_methods:
-        detrend_methods_out.append("GP")
-        output.append(gp_detrended)
-        output.append(gp_x_no_outliers)
-        output.append(gp_detrended_no_outliers)
-    else:
-        output.append(nan_array)
-        output.append(nan_array)
-        output.append(nan_array)
+    orbital_data.to_csv(path + '/' + 'orbital_data.csv', index=False)
 
-    if "CoFiAM" in detrend_methods:
-        detrend_methods_out.append("CoFiAM")
-        output.append(cofiam_detrended)
-        output.append(cofiam_x_no_outliers)
-        output.append(cofiam_detrended_no_outliers)
-    else:
-        output.append(nan_array)
-        output.append(nan_array)
-        output.append(nan_array)
+    t0s_output = pd.DataFrame({
+    't0s_in_data': t0s_out
+    })
 
-    return detrend_methods_out, output
+    t0s_output.to_csv(path + '/' + 't0s.csv', index=False)
+   
 
-
-def detrend_sap_and_pdc(
-    sap_values, pdc_values, save_dir, pop_out_plots, detrend_methods
-):
-
-    # assumes order of sap, pdc arrays are as follows:
-    # [pdc_x_epochs, pdc_y_epochs, pdc_yerr_epochs, pdc_mask_epochs, \
-    # pdc_mask_fitted_planet_epochs, pdc_problem_times, pdc_t0s, pdc_period, \
-    # pdc_duration, pdc_cadence]
-
-    sap_detrend_methods_out, detrended_sap_vals = detrend_variable_methods(
-        x_epochs=sap_values[0],
-        y_epochs=sap_values[1],
-        yerr_epochs=sap_values[2],
-        mask_epochs=sap_values[3],
-        mask_fitted_planet_epochs=sap_values[4],
-        problem_times=sap_values[5],
-        t0s=sap_values[6],
-        period=sap_values[7],
-        duration=sap_values[8],
-        cadence=sap_values[9],
-        save_to_directory=save_dir + "sap_",
-        show_plots=pop_out_plots,
-        detrend_methods=detrend_methods,
-    )
-
-    pdc_detrend_methods_out, detrended_pdc_vals = detrend_variable_methods(
-        x_epochs=pdc_values[0],
-        y_epochs=pdc_values[1],
-        yerr_epochs=pdc_values[2],
-        mask_epochs=pdc_values[3],
-        mask_fitted_planet_epochs=pdc_values[4],
-        problem_times=pdc_values[5],
-        t0s=pdc_values[6],
-        period=pdc_values[7],
-        duration=pdc_values[8],
-        cadence=pdc_values[9],
-        save_to_directory=save_dir + "pdc_",
-        show_plots=pop_out_plots,
-        detrend_methods=detrend_methods,
-    )
-
-    return (
-        sap_detrend_methods_out,
-        pdc_detrend_methods_out,
-        detrended_sap_vals,
-        detrended_pdc_vals,
-    )
-
-
-def detrend_one_lc(lc_values, save_dir, pop_out_plots, detrend_methods):
-
-    # assumes order of sap, pdc arrays are as follows:
-    # [pdc_x_epochs, pdc_y_epochs, pdc_yerr_epochs, pdc_mask_epochs, \
-    # pdc_mask_fitted_planet_epochs, pdc_problem_times, pdc_t0s, pdc_period, \
-    # pdc_duration, pdc_cadence]
-
-    detrend_methods_out, detrended_lc_vals = detrend_variable_methods(
-        x_epochs=lc_values[0],
-        y_epochs=lc_values[1],
-        yerr_epochs=lc_values[2],
-        mask_epochs=lc_values[3],
-        mask_fitted_planet_epochs=lc_values[4],
-        problem_times=lc_values[5],
-        t0s=lc_values[6],
-        period=lc_values[7],
-        duration=lc_values[8],
-        cadence=lc_values[9],
-        save_to_directory=save_dir,
-        show_plots=pop_out_plots,
-        detrend_methods=detrend_methods,
-    )
-
-    return detrend_methods_out, detrended_lc_vals
+    return detrend_df, t0s_out, period_out, duration_out
