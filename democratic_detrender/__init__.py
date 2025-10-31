@@ -8,6 +8,6 @@ except ImportError:
     # fallback for when setuptools_scm hasn't generated the version file yet
     __version__ = "unknown"
 
-__all__ = ["democratic_detrend", "detrend_only", "problem_times_only"]
+__all__ = ["democratic_detrend"]
 __license__ = "MIT"
 __description__ = "An ensemble-based approach to removing nuisance signals from stellar time-series photometry."
