@@ -6,22 +6,35 @@ def reject_outliers_out_of_transit(
     time, flux, flux_err, mask, mask_fitted_planet, time_window, sigma_window
 ):
     """
-    rejects outliers via moving median and sigma clipping outside of transit mask
+    Reject outliers using moving median and sigma clipping outside of transit mask.
     
-    input:
-    time = array of time values
-    flux = array of flux values
-    flux_err = array of flux error values
-    mask = array of all mask values
-    mask = array of mask values only for the planet we are fitting 
-    time_window = int, how much time around which to determine median on
-    sigma_window = int, how many sigmas to clip
-    
-    
-    returns:
-    flux_out = array of flux values with outliers value changed to np.nan 
-    flux_err_out = array of flux error values with outliers value changed to np.nan  
-    
+    Parameters
+    ----------
+    time : array-like
+        Array of time values.
+    flux : array-like
+        Array of flux values.
+    flux_err : array-like
+        Array of flux error values.
+    mask : array-like
+        Array of all transit mask values.
+    mask_fitted_planet : array-like
+        Array of mask values only for the planet being fitted.
+    time_window : float
+        Time window around which to determine median.
+    sigma_window : float
+        Number of sigma for clipping threshold.
+        
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - numpy.ndarray : Time values with outliers removed
+        - numpy.ndarray : Flux values with outliers removed
+        - numpy.ndarray : Flux error values with outliers removed
+        - numpy.ndarray : Mask values with outliers removed
+        - numpy.ndarray : Fitted planet mask values with outliers removed
+        - list : Moving median values for reference
     """
 
     if len(time) != len(flux):
@@ -132,21 +145,29 @@ def reject_outliers_everywhere(
     time, flux, flux_err, time_window, npoints_window, sigma_window
 ):
     """
-    rejects outliers via moving median and sigma clipping outside of transit mask
+    Reject outliers using moving median and sigma clipping everywhere in the data.
     
-    input:
-    time = array of time values
-    flux = array of flux values
-    flux_err = array of flux error values
-    time_window = float, much time before and after data gaps (of length >time_window) for which we don't do outlier rejection
-    npoints_window = int, how points around which to determine median on
-    sigma_window = int, how many sigmas to clip
-    
-    
-    returns:
-    time_out = array of time values with outliers removed
-    flux_out = array of flux values with outliers removed
-    
+    Parameters
+    ----------
+    time : array-like
+        Array of time values.
+    flux : array-like
+        Array of flux values.
+    flux_err : array-like
+        Array of flux error values.
+    time_window : float
+        Time before and after data gaps for which outlier rejection is skipped.
+    npoints_window : int
+        Number of points around which to determine median.
+    sigma_window : float
+        Number of sigma for clipping threshold.
+        
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - numpy.ndarray : Time values with outliers removed
+        - numpy.ndarray : Flux values with outliers removed
     """
 
     if len(time) != len(flux):

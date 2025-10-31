@@ -6,6 +6,34 @@ from democratic_detrender.helper_functions import find_nearest
 
 
 def split_around_problems(x, y, yerr, mask, mask_fitted_planet, problem_times):
+    """
+    Split light curve data around identified problem times.
+    
+    Parameters
+    ----------
+    x : array-like
+        Time values.
+    y : array-like
+        Flux values.
+    yerr : array-like
+        Flux error values.
+    mask : array-like
+        Transit mask values.
+    mask_fitted_planet : array-like
+        Fitted planet mask values.
+    problem_times : list
+        List of problematic time stamps where data should be split.
+        
+    Returns
+    -------
+    list
+        A list containing:
+        - numpy.ndarray : Time values split around problem times
+        - numpy.ndarray : Flux values split around problem times
+        - numpy.ndarray : Flux error values split around problem times
+        - numpy.ndarray : Transit mask values split around problem times
+        - numpy.ndarray : Fitted planet mask values split around problem times
+    """
     problem_split_x = []
     problem_split_y = []
     problem_split_yerr = []
@@ -72,6 +100,46 @@ def add_nans_for_missing_data(
     pdc_mask_local,
     pdc_mask_fitted_planet_local,
 ):
+    """
+    Synchronize SAP and PDC flux data by adding NaN values for missing timestamps.
+    
+    This function ensures that both SAP and PDC flux arrays have the same length
+    and timestamps by inserting NaN values where data is missing from either array.
+    
+    Parameters
+    ----------
+    sap_x_local : array-like
+        SAP flux time values.
+    sap_detrended_lcs : list of array-like
+        List of SAP detrended light curves from different methods.
+    sap_yerr_local : array-like
+        SAP flux error values.
+    sap_mask_local : array-like
+        SAP transit mask values.
+    sap_mask_fitted_planet_local : array-like
+        SAP fitted planet mask values.
+    pdc_x_local : array-like
+        PDC flux time values.
+    pdc_detrended_lcs : list of array-like
+        List of PDC detrended light curves from different methods.
+    pdc_yerr_local : array-like
+        PDC flux error values.
+    pdc_mask_local : array-like
+        PDC transit mask values.
+    pdc_mask_fitted_planet_local : array-like
+        PDC fitted planet mask values.
+        
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - numpy.ndarray : Synchronized time values
+        - list : Synchronized SAP detrended light curves
+        - list : Synchronized PDC detrended light curves
+        - numpy.ndarray : Synchronized error values (mean of SAP and PDC)
+        - numpy.ndarray : Synchronized mask values
+        - numpy.ndarray : Synchronized fitted planet mask values
+    """
 
     print("")
     print("")
@@ -194,6 +262,41 @@ def add_nans_for_missing_data(
 def split_around_transits(
     x, y, yerr, mask, mask_fitted_planet, t0s, window, period, model="None"
 ):
+    """
+    Split light curve data around individual transit events.
+    
+    Parameters
+    ----------
+    x : array-like
+        Time values.
+    y : array-like
+        Flux values.
+    yerr : array-like
+        Flux error values.
+    mask : array-like
+        Transit mask values.
+    mask_fitted_planet : array-like
+        Fitted planet mask values.
+    t0s : array-like
+        Midtransit times in the data.
+    window : float
+        Fraction of the period to include on either side of transit.
+    period : float
+        Planet period to define plotting limits.
+    model : array-like or str, optional
+        Model values to split along with data. Default is "None".
+        
+    Returns
+    -------
+    tuple
+        A tuple containing arrays split around each transit:
+        - numpy.ndarray : Time values for each transit
+        - numpy.ndarray : Flux values for each transit
+        - numpy.ndarray : Flux error values for each transit
+        - numpy.ndarray : Transit mask values for each transit
+        - numpy.ndarray : Fitted planet mask values for each transit
+        - numpy.ndarray : Model values for each transit (if model provided)
+    """
     # x = time
     # y = flux
     # yerr = flux error
@@ -284,6 +387,34 @@ def find_quarters_with_transits(
     mask_fitted_planet_quarters,
     t0s,
 ):
+    """
+    Identify and extract quarters/sectors that contain transit events.
+    
+    Parameters
+    ----------
+    x_quarters : list of array-like
+        Time values for each quarter/sector.
+    y_quarters : list of array-like
+        Flux values for each quarter/sector.
+    yerr_quarters : list of array-like
+        Flux error values for each quarter/sector.
+    mask_quarters : list of array-like
+        Transit mask values for each quarter/sector.
+    mask_fitted_planet_quarters : list of array-like
+        Fitted planet mask values for each quarter/sector.
+    t0s : array-like
+        Transit center times to search for.
+        
+    Returns
+    -------
+    tuple
+        A tuple containing data from quarters with transits:
+        - list : Time values from quarters with transits
+        - list : Flux values from quarters with transits
+        - list : Flux error values from quarters with transits
+        - list : Transit mask values from quarters with transits
+        - list : Fitted planet mask values from quarters with transits
+    """
     x_transits = []
     y_transits = []
     yerr_transits = []

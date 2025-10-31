@@ -1,3 +1,11 @@
+"""
+Problem times identification module for stellar photometry.
+
+This module provides functionality for identifying and handling problematic 
+time periods in stellar light curve data, such as instrumental jumps or 
+systematic effects.
+"""
+
 from datetime import date
 import numpy as np
 import argparse
@@ -6,6 +14,17 @@ import warnings
 import ast
 
 def problem_times_only():
+    """
+    Identify problematic time periods in light curve data.
+    
+    Currently not supported - placeholder function for future implementation
+    of standalone problem time identification functionality.
+    
+    Returns
+    -------
+    None
+        Function is not currently implemented.
+    """
     print("NOT CURRENTLY SUPPORTED")
     return None
 

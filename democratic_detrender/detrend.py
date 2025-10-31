@@ -1,3 +1,11 @@
+"""
+Detrending module for stellar photometry data.
+
+This module provides functions for applying various detrending methods
+to stellar light curve data, including local polynomial, polynomial AM,
+Gaussian Process, and CoFi AM methods.
+"""
+
 import numpy as np
 import time
 
@@ -12,25 +20,36 @@ from democratic_detrender.helper_functions import find_nearest
 
 def trim_jump_times(x, y, yerr, mask, mask_fitted_planet, t0s, period, jump_times):
     """
-    Trim light curve around the labeled jump (ie. problem) times in time series data.
+    Trim light curve around labeled jump (problem) times in time series data.
 
-    Parameters:
-        x (array): Time values.
-        y (array): Flux values.
-        yerr (array): Flux error values.
-        mask (array): Mask array.
-        mask_fitted_planet (array): Mask array for fitted planet.
-        t0s (array): Midtransit times.
-        period (float): Planet period to help split data around transits.
-        jump_times (list): List of jump times to trim around transits.
+    Parameters
+    ----------
+    x : array-like
+        Time values.
+    y : array-like
+        Flux values.
+    yerr : array-like
+        Flux error values.
+    mask : array-like
+        Mask array.
+    mask_fitted_planet : array-like
+        Mask array for fitted planet.
+    t0s : array-like
+        Midtransit times.
+    period : float
+        Planet period to help split data around transits.
+    jump_times : list
+        List of jump times to trim around transits.
 
-    Returns:
-        Tuple of arrays containing trimmed time series data:
-            x_epochs (array): Trimmed time values.
-            y_epochs (array): Trimmed flux values.
-            yerr_epochs (array): Trimmed flux error values.
-            mask_epochs (array): Trimmed mask array.
-            mask_fitted_planet_epochs (array): Trimmed mask array for fitted planet.
+    Returns
+    -------
+    tuple
+        A tuple containing trimmed time series data:
+        - numpy.ndarray : Trimmed time values
+        - numpy.ndarray : Trimmed flux values
+        - numpy.ndarray : Trimmed flux error values
+        - numpy.ndarray : Trimmed mask array
+        - numpy.ndarray : Trimmed mask array for fitted planet
     """
 
     if jump_times != []:
@@ -161,30 +180,45 @@ def detrend_variable_methods(
     show_plots,
     detrend_methods,
 ):
-
     """
-	Detrend light curves using various methods.
+    Detrend light curves using various specified methods.
 
-	Parameters:
-	    x_epochs (array): Array of time values for each epoch.
-	    y_epochs (array): Array of flux values for each epoch.
-	    yerr_epochs (array): Array of flux error values for each epoch.
-	    mask_epochs (array): Array of mask values for each epoch.
-	    mask_fitted_planet_epochs (array): Array of mask values for each fitted planet epoch.
-	    problem_times (list): List of jump times to trim structured noise.
-	    t0s (list): List of midtransit times.
-	    period (float): Planet period to define plotting limit.
-	    duration (float): Transit duration.
-	    cadence (float): Cadence of observations.
-	    save_to_directory (str): Directory path to save plots.
-	    show_plots (bool): Whether to display plots.
-	    detrend_methods (list): List of detrending methods to apply.
+    Parameters
+    ----------
+    x_epochs : array-like
+        Array of time values for each epoch.
+    y_epochs : array-like
+        Array of flux values for each epoch.
+    yerr_epochs : array-like
+        Array of flux error values for each epoch.
+    mask_epochs : array-like
+        Array of mask values for each epoch.
+    mask_fitted_planet_epochs : array-like
+        Array of mask values for each fitted planet epoch.
+    problem_times : list
+        List of jump times to trim structured noise.
+    t0s : list
+        List of midtransit times.
+    period : float
+        Planet period to define plotting limit.
+    duration : float
+        Transit duration.
+    cadence : float
+        Cadence of observations.
+    save_to_directory : str
+        Directory path to save plots.
+    show_plots : bool
+        Whether to display plots.
+    detrend_methods : list
+        List of detrending methods to apply.
 
-	Returns:
-	    Tuple containing detrending methods used and output arrays:
-	        detrend_methods_out (list): List of detrending methods applied.
-	        output (list): List of arrays containing detrended and processed data.
-	"""
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - list : List of detrending methods successfully applied
+        - list : List of arrays containing detrended and processed data
+    """
 
     (
         x_trimmed,
@@ -502,6 +536,34 @@ def detrend_variable_methods(
 def detrend_sap_and_pdc(
     sap_values, pdc_values, save_dir, pop_out_plots, detrend_methods
 ):
+    """
+    Detrend both SAP and PDC flux data using multiple methods.
+    
+    Parameters
+    ----------
+    sap_values : list
+        List containing SAP flux data in the following order:
+        [x_epochs, y_epochs, yerr_epochs, mask_epochs, 
+         mask_fitted_planet_epochs, problem_times, t0s, period, 
+         duration, cadence].
+    pdc_values : list
+        List containing PDC flux data in the same order as sap_values.
+    save_dir : str
+        Directory path to save output files and plots.
+    pop_out_plots : bool
+        Whether to display plots.
+    detrend_methods : list
+        List of detrending methods to apply.
+        
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - list : SAP detrending methods successfully applied
+        - list : PDC detrending methods successfully applied  
+        - list : Detrended SAP values
+        - list : Detrended PDC values
+    """
 
     # assumes order of sap, pdc arrays are as follows:
     # [pdc_x_epochs, pdc_y_epochs, pdc_yerr_epochs, pdc_mask_epochs, \
@@ -549,6 +611,30 @@ def detrend_sap_and_pdc(
 
 
 def detrend_one_lc(lc_values, save_dir, pop_out_plots, detrend_methods):
+    """
+    Detrend a single light curve using multiple methods.
+    
+    Parameters
+    ----------
+    lc_values : list
+        List containing light curve data in the following order:
+        [x_epochs, y_epochs, yerr_epochs, mask_epochs,
+         mask_fitted_planet_epochs, problem_times, t0s, period,
+         duration, cadence].
+    save_dir : str
+        Directory path to save output files and plots.
+    pop_out_plots : bool
+        Whether to display plots.
+    detrend_methods : list
+        List of detrending methods to apply.
+        
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - list : Detrending methods successfully applied
+        - list : Detrended light curve values
+    """
 
     # assumes order of sap, pdc arrays are as follows:
     # [pdc_x_epochs, pdc_y_epochs, pdc_yerr_epochs, pdc_mask_epochs, \
