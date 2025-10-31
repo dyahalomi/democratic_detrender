@@ -16,9 +16,9 @@ def method_reject(path, input_depth=0.01, input_period=None, input_duration=None
     
 
     # Load the file into a Pandas DataFrame, skipping the first column
-    df = pd.read_csv(path+'detrended.csv')
+    df = pd.read_csv(path+'/detrended.csv')
 
-    orbital_data = pd.read_csv(path+'orbital_data.csv')
+    orbital_data = pd.read_csv(path+'/orbital_data.csv')
 
     if input_period == None:
         period = orbital_data['period']
@@ -26,7 +26,7 @@ def method_reject(path, input_depth=0.01, input_period=None, input_duration=None
     if input_duration == None:
         duration = orbital_data['duration']
 
-    t0s = list(pd.read_csv(path+'t0s.csv')['t0s_in_data'])
+    t0s = list(pd.read_csv(path+'/t0s.csv')['t0s_in_data'])
 
     # Fixed columns
     fixed_cols = ['time', 'yerr', 'mask', 'method marginalized']

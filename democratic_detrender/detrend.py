@@ -261,10 +261,12 @@ def detrend_all(
 
             yerr_detrended = np.sqrt(yerr_detrended.astype(float) ** 2 + MAD ** 2)
             '''
+
+
             method_marg_detrended, yerr_detrended = ensemble_step(
-            np.array(y_detrended).T,          # shape (n_times, n_methods)
-            np.array(yerr_detrended),       # shape (n_times,)
-            method=ensemble_statistic
+                np.array(y_detrended).T,          # shape (n_times, n_methods)
+                np.array(yerr_detrended),       # shape (n_times,)
+                method=ensemble_statistic
             )
 
             # save detrend data as csv
@@ -441,9 +443,9 @@ def detrend_all(
         yerr_detrended = np.sqrt(yerr_detrended.astype(float) ** 2 + MAD ** 2)
         '''
         method_marg_detrended, yerr_detrended = ensemble_step(
-        np.array(y_detrended).T,          # shape (n_times, n_methods)
-        np.array(yerr_detrended),       # shape (n_times,)
-        method=ensemble_statistic
+            np.array(y_detrended).T,          # shape (n_times, n_methods)
+            np.array(yerr_detrended),       # shape (n_times,)
+            method=ensemble_statistic
         )
 
         # save detrend data as csv
@@ -618,9 +620,9 @@ def detrend_all(
         yerr_detrended = np.sqrt(yerr_detrended.astype(float) ** 2 + MAD ** 2)
         '''
         method_marg_detrended, yerr_detrended = ensemble_step(
-        np.array(y_detrended).T,          # shape (n_times, n_methods)
-        np.array(yerr_detrended),       # shape (n_times,)
-        method=ensemble_statistic
+            np.array(y_detrended).T,          # shape (n_times, n_methods)
+            np.array(yerr_detrended),       # shape (n_times,)
+            method=ensemble_statistic
         )
 
         # saving detrend data as csv
