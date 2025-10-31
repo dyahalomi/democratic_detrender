@@ -262,9 +262,7 @@ def detrend_all(
             yerr_detrended = np.sqrt(yerr_detrended.astype(float) ** 2 + MAD ** 2)
             '''
 
-            print(np.shape(y_detrended))
-            print(np.shpae(y_detrended.T))
-            print('maybe here')
+
             method_marg_detrended, yerr_detrended = ensemble_step(
                 np.array(y_detrended).T,          # shape (n_times, n_methods)
                 np.array(yerr_detrended),       # shape (n_times,)
