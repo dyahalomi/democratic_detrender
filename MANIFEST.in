@@ -1,0 +1,23 @@
+# Include important files not automatically detected
+include README.md
+include LICENSE
+include HISTORY.rst
+
+# Include data files in package
+recursive-include democratic_detrender *.json
+
+# Exclude files and folders that shouldn't be packaged
+global-exclude *.pyc *.o *.so *.dylib *.pyd
+global-exclude .DS_Store
+global-exclude __pycache__
+global-exclude .pytest_cache
+global-exclude .coverage
+global-exclude .git*
+
+# Prune folders
+prune build
+prune dist
+prune docs/_build
+prune .pytest_cache
+prune *.egg-info
+prune **/__pycache__
