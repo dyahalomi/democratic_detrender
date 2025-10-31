@@ -13,8 +13,10 @@ dependencies = [
     "pandas",  
     "matplotlib",
     "pymc>=5.0.0",
+    "pymc-ext>=1.0.1",
     "lightkurve>=2.5.0",
     "celerite2>=0.3.2",
+    "latex>=0.7.0",
 ]
 license = "MIT"
 keywords = ["astronomy", "exoplanets"]
