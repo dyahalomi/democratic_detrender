@@ -11,6 +11,7 @@ from democratic_detrender.get_lc import get_light_curve
 from democratic_detrender.manipulate_data import add_nans_for_missing_data
 from democratic_detrender.plot import plot_detrended_lc, plot_phase_fold_lc
 from democratic_detrender.detrend_functions import detrend_sap_and_pdc, detrend_one_lc
+from democratic_detrender.helper_functions import ensemble_step
 
 def detrend_all(
     input_id, mission, flux_type='both', input_planet_number=1, input_dir='./',
