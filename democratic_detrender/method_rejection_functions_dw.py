@@ -1,51 +1,76 @@
 from democratic_detrender.helper_functions import durbin_watson
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import time
+from scipy.special import erf
 
-def DW_monte_carlo(x, yerr, t0, duration, in_transit_index, out_transit_index, niter=10000):
-    
-    if in_transit_index == 0:
-        no_pre_transit = True
-    else:
-        no_pre_transit = False
-        
-    
-    if out_transit_index == len(x):
-        no_post_transit = True
-    else:
-        no_post_transit = False
-        
-        
-    ###create 10,000 white noise profiles and determine DW for epoch
-    ###then count the number of these that have greater DW than detrended DW
-    DWMC = []
-    for jj in range(0, niter):
+def dw_per_row(errors):
+    """
+    Compute Durbin–Watson per row.
+    errors: (n_draws, T) or (T,) array of residuals
+    returns: (n_draws,) array of DW values (or (1,) if 1D input)
+    """
+    if errors.ndim == 1:
+        errors = errors[None, :]
+    if errors.shape[1] < 2:
+        return np.full(errors.shape[0], 2.0)
+
+    diffs = np.diff(errors, axis=1)
+    numerator = np.sum(diffs**2, axis=1)
+    denominator = np.sum(errors**2, axis=1)
+    return np.where(denominator > 0, numerator / denominator, 2.0)
 
 
-        if no_pre_transit:
-            DWstat_fake_pre_transit = 2.
+def DW_monte_carlo(x, yerr, t0, duration, in_transit_index, out_transit_index,
+                   niter=100000, rng=None, batch_size=20000):
+    """
+    Monte Carlo for the modified DW (combine pre/post around 2 in quadrature).
+    Returns list of simulated DW values (length niter).
+    """
+    yerr = np.asarray(yerr)
+    n_points = yerr.size
+
+    if rng is None:
+        rng = np.random.default_rng()
+
+    # segment definitions
+    has_pre = in_transit_index > 0
+    has_post = out_transit_index < n_points
+    yerr_pre  = yerr[:in_transit_index] if has_pre  else None
+    yerr_post = yerr[out_transit_index:] if has_post else None
+    len_pre   = 0 if yerr_pre  is None else yerr_pre.size
+    len_post  = 0 if yerr_post is None else yerr_post.size
+
+    # output
+    dw_values = np.empty(niter)
+    n_completed = 0
+    dw_ref_value = 2.0  # no-autocorr reference
+
+    while n_completed < niter:
+        n_to_run = min(batch_size, niter - n_completed)
+
+        if has_pre:
+            residuals_pre = rng.standard_normal((n_to_run, len_pre)) * yerr_pre
+            dw_pre = dw_per_row(residuals_pre)
         else:
-            fake_residuals_pre_transit = np.random.normal(loc=0.0, 
-                                                          scale=yerr[0:in_transit_index], 
-                                                          size=np.shape(yerr[0:in_transit_index]))
-            DWstat_fake_pre_transit = durbin_watson(fake_residuals_pre_transit)
+            dw_pre = np.full(n_to_run, 2.0)
 
-        
-        if no_post_transit:
-            DWstat_fake_post_transit = 2.
+        if has_post:
+            residuals_post = rng.standard_normal((n_to_run, len_post)) * yerr_post
+            dw_post = dw_per_row(residuals_post)
         else:
-            fake_residuals_post_transit = np.random.normal(loc=0.0, 
-                                                           scale=yerr[out_transit_index:len(yerr)], 
-                                                           size=np.shape(yerr[out_transit_index:len(yerr)]))
-            DWstat_fake_post_transit = durbin_watson(fake_residuals_post_transit)
+            dw_post = np.full(n_to_run, 2.0)
 
-        
-        #determine DW for white noise data
-        DWfake = np.sqrt((DWstat_fake_pre_transit-2.)**2. + (DWstat_fake_post_transit-2.)**2.)
-        
-        DWMC.append(DWfake)
-        
+        deviation_pre  = dw_pre  - dw_ref_value
+        deviation_post = dw_post - dw_ref_value
+        dw_values[n_completed:n_completed + n_to_run] = np.sqrt(
+            deviation_pre**2 + deviation_post**2
+        )
 
+        n_completed += n_to_run
 
-    return DWMC
+    return dw_values.tolist()
         
     
 def determine_transit_indices(x, t0, duration):        
@@ -85,7 +110,7 @@ def determine_transit_indices(x, t0, duration):
     return in_transit_index, out_transit_index
                 
                 
-def DW_outlier_detection(x, y, yerr, t0, in_transit_index, out_transit_index, DWMC, niter=10000, max_sigma=3):
+def DW_outlier_detection(x, y, yerr, t0, in_transit_index, out_transit_index, DWMC, max_sigma=3):
     """
     test how much the DW statistic for a detrended LC is an outlier (in terms of sigma) 
     for a single epoch LC in time series data.
@@ -171,7 +196,7 @@ def DW_outlier_detection(x, y, yerr, t0, in_transit_index, out_transit_index, DW
 
 
 
-def reject_via_DW(time_epochs, y_epochs, yerr_epochs, t0s, period, duration, niter=10000):
+def reject_via_DW(time_epochs, y_epochs, yerr_epochs, t0s, period, duration, niter=100000):
     
     print('')
     print("starting individual model rejection via DW metric:")
@@ -182,11 +207,11 @@ def reject_via_DW(time_epochs, y_epochs, yerr_epochs, t0s, period, duration, nit
     in_transit_index_epochs = []
     out_transit_index_epochs = []
     for ii, file in enumerate(time_epochs):
-        in_transit_index, out_transit_index = determine_transit_indices(np.array(time_epochs[ii]), t0s[ii], duration*1.1)       
+        in_transit_index, out_transit_index = determine_transit_indices(np.array(time_epochs[ii]), t0s[ii], duration)       
         in_transit_index_epochs.append(in_transit_index)
         out_transit_index_epochs.append(out_transit_index)
 
-        DWMC = DW_monte_carlo(np.array(time_epochs[ii]), np.array(yerr_epochs[ii]), t0s[ii], duration, in_transit_index, out_transit_index, niter=10000)
+        DWMC = DW_monte_carlo(np.array(time_epochs[ii]), np.array(yerr_epochs[ii]), t0s[ii], duration, in_transit_index, out_transit_index, niter=niter)
         DWMC_epochs.append(DWMC)
 
 
@@ -208,7 +233,6 @@ def reject_via_DW(time_epochs, y_epochs, yerr_epochs, t0s, period, duration, nit
                                                       t0s[ii],
                                                       in_transit_index_epochs[ii], out_transit_index_epochs[ii],
                                                       DWMC_epochs[ii], 
-                                                      niter=niter,
                                                       max_sigma=3
                                                      )
 
@@ -268,7 +292,7 @@ def dw_rejection_plots(DWMC_epochs, DWdetrend_epochs, upper_bound_epochs, column
         plt.text(1.5*np.max(DWMC_epochs[ii])-.1, 0.5, r'$\overline{\mathrm{DW}}$ $>$ 3$\sigma$ outlier', 
                  verticalalignment='bottom', horizontalalignment='right', fontsize=27, color='r')
 
-        plt.title(r'Bootstrap MC $\overline{\mathrm{DW}}$ Distribution vs. Detrended $\overline{\mathrm{DW}}$s, epoch \#'+str(epochs[ii]+1), fontsize=23)
+        plt.title(r'Bootstrap MC $\overline{\mathrm{DW}}$ Distribution vs. Detrended $\overline{\mathrm{DW}}$s, epoch \#'+str(ii+1), fontsize=23)
         plt.xlabel(r'$\overline{\mathrm{DW}}$ Statistic of Light Curve', fontsize=23)
         plt.ylabel('Density', fontsize=23)
         plt.legend(fontsize=13, loc=1)
@@ -279,4 +303,6 @@ def dw_rejection_plots(DWMC_epochs, DWdetrend_epochs, upper_bound_epochs, column
         plt.tight_layout()
 
         plt.savefig(figpath + 'reject_via_dw_epoch'+str(ii+1)+'.pdf')
-        plt.show()
+
+    return None
+

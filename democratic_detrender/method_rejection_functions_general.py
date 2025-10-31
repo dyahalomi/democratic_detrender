@@ -1,3 +1,8 @@
+import numpy as np
+import pandas as pd
+from scipy.stats import median_abs_deviation
+
+
 def reject_epochs_by_white_noise_tests(y_epochs, dw_sigma_test, binning_sigma_test, detrending_methods):
     
     for col in detrending_methods:
@@ -32,7 +37,7 @@ def merge_epochs(time_epochs, y_epochs, yerr_epochs):
                 
 
     
-def ensemble_step(times_all, y_all, yerr_all, detrending_methods):
+def ensemble_step(times_all, y_all, yerr_all, detrending_methods, mask):
 
     x_detrended = np.array(times_all)
     y_detrended = np.array(y_all)
@@ -51,7 +56,7 @@ def ensemble_step(times_all, y_all, yerr_all, detrending_methods):
 
     detrend_dict["time"] = x_detrended
     detrend_dict["yerr"] = yerr_detrended
-    detrend_dict["mask"] = df['mask']
+    detrend_dict["mask"] = mask
     detrend_dict["method marginalized"] = method_marg_detrended
 
     detrend_label = detrending_methods
@@ -62,8 +67,6 @@ def ensemble_step(times_all, y_all, yerr_all, detrending_methods):
 
 
     detrend_df = pd.DataFrame(detrend_dict)
-
-    detrend_df.to_csv('detrended_post_rejection.csv')
     
     
     return detrend_df

@@ -202,7 +202,7 @@ def plot_detrended_lc(
     period,
     colors,
     duration,
-    mask_width=1.3,
+    mask_width=1.1,
     depth=None,
     figname=None,
     title=None,
@@ -306,48 +306,6 @@ def plot_detrended_lc(
         ax.set_ylim(-1.2 * depth, depth * len(ys))
         ax.tick_params(axis="x", rotation=45)
         ax.ticklabel_format(useOffset=False)
-
-    elif len(t0s_in_data) < 6:
-        for ii in range(0, len(t0s_in_data)):
-            ax_ii = ax[ii]
-            t0 = t0s_in_data[ii]
-
-            detrend_offset = 0
-            for detrend_index in range(0, len(ys)):
-
-                y_detrend = ys[detrend_index]
-                x = xs
-
-                ax_ii.plot(
-                    x,
-                    y_detrend + detrend_offset,
-                    "o",
-                    color=colors[detrend_index],
-                    alpha=0.63,
-                )
-
-                ax_ii.text(
-                    t0 - (period * window) + 0.18,
-                    detrend_offset + 0.0018,
-                    detrend_labels[detrend_index],
-                    color=colors[detrend_index],
-                    fontsize=18,
-                )
-
-                detrend_offset += depth
-
-            ax_ii.axvline(
-                transit_windows[ii][0], linewidth=1.8, color="k", alpha=0.79, ls="--"
-            )
-            ax_ii.axvline(
-                transit_windows[ii][1], linewidth=1.8, color="k", alpha=0.79, ls="--"
-            )
-
-            ax_ii.set_xlabel("time [KBJD]", fontsize=18)
-            ax_ii.set_ylabel("intensity", fontsize=18)
-            ax_ii.set_xlim(t0 - (period * window), t0 + (period * window))
-            ax_ii.set_ylim(-1.2 * depth, depth * len(ys))
-            ax_ii.tick_params(axis="x", rotation=45)
 
     else:
         column = 0

@@ -5,6 +5,7 @@
 
 import numpy as np
 from scipy.interpolate import interp1d
+from numpy.polynomial import Polynomial
 
 from democratic_detrender.manipulate_data import split_around_transits
 from democratic_detrender.helper_functions import get_detrended_lc
@@ -23,8 +24,14 @@ def polyLOC_function(times, fluxes, degree):
     times = np.array(times, dtype=float)
     fluxes = np.array(fluxes, dtype=float)
 
-    poly_coeffs = np.polyfit(times, fluxes, degree)
-    model = np.polyval(poly_coeffs, times)
+    #poly_coeffs = np.polyfit(times, fluxes, degree)
+    #model = np.polyval(poly_coeffs, times)
+    
+    # Fit a polynomial in a numerically stable way (x normalized to [-1,1])
+    p = Polynomial.fit(times, fluxes, deg=degree)
+    # Evaluate the fitted model at the original x points
+    model = p(times)
+
     return model
 
 
@@ -118,7 +125,7 @@ def local_method(
 
 
         except Exception as e:
-            print(f"local failed for the {ii}th epoch: {e}")
+            print(f"local failed for the {ii+1}th epoch: {e}")
             # local failed for this epoch, just add nans of the same size
             nan_array = np.empty(np.shape(x_ii))
             nan_array[:] = np.nan
@@ -155,7 +162,7 @@ def local_method(
             y_out_detrended.append(y_ii_linear_detrended)
 
         except Exception as e:
-            print(f"local failed for the {ii}th epoch at linear step: {e}")
+            print(f"local failed for the {ii+1}th epoch at linear step: {e}")
             # local failed for this epoch, just add nans of the same size
             nan_array = np.empty(np.shape(x_ii))
             nan_array[:] = np.nan

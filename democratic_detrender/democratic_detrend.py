@@ -5,23 +5,24 @@ from scipy.stats import median_abs_deviation
 import os
 import warnings
 
+
 #surpress np.RankWarning
-warnings.simplefilter("ignore", np.RankWarning)
+#warnings.simplefilter("ignore", np.RankWarning)
 
 from democratic_detrender.find_flux_jumps import find_flux_jumps, find_sap_and_pdc_flux_jumps
 from democratic_detrender.get_lc import get_light_curve
 from democratic_detrender.manipulate_data import add_nans_for_missing_data
 from democratic_detrender.plot import plot_detrended_lc, plot_phase_fold_lc
 from democratic_detrender.detrend import detrend_sap_and_pdc, detrend_one_lc
-from democratic_detrender.dw_rejection_functions import reject_via_DW, dw_rejection_plots
-from democratic_detrender.binning_rejection_functions import reject_via_binning, binning_rejection_plots
-from democratic_detrender.method_rejection_functions import ensemble_step, merge_epochs, reject_epochs_by_white_noise_tests
+from democratic_detrender.method_rejection_functions_dw import reject_via_DW, dw_rejection_plots
+from democratic_detrender.method_rejection_functions_binning import reject_via_binning, binning_rejection_plots
+from democratic_detrender.method_rejection_functions_general import ensemble_step, merge_epochs, reject_epochs_by_white_noise_tests
 
 def detrend_all(
     input_id, mission, flux_type='both', input_planet_number=1, input_dir='./',
     input_depth=0.01, input_period=None, input_t0=None, input_duration=None, input_mask_width=1.1, 
     input_show_plots=False, input_dont_bin=False, input_use_sap_problem_times=False, 
-    input_no_pdc_problem_times=True, input_user_light_curve=None,
+    input_no_pdc_problem_times=True, input_user_light_curve=None, ensemble_statistic = "median",
     input_polyAM=True, input_CoFiAM=True, input_GP=True, input_local=True):
 
 
@@ -94,12 +95,12 @@ def detrend_all(
 
         if os.path.exists(detrendec_lc_saved):
             print('detrended lc for '+input_id+' planet number '+str(input_planet_number)+' found')
-            detrended_df = pd.read_csv(detrendec_lc_saved)
-            x_detrended = detrended_df['time']
-            sap_detrend_sep_lc = [detrended_df['local SAP'], detrended_df['polyAM SAP'], detrended_df['GP SAP'], detrended_df['CoFiAM SAP']]
-            pdc_detrend_sep_lc = [detrended_df['local PDCSAP'], detrended_df['polyAM PDCSAP'], detrended_df['GP PDCSAP'], detrended_df['CoFiAM PDCSAP']]
-            yerr_detrended = detrended_df['yerr']
-            mask_detrended = detrended_df['mask']
+            detrend_df = pd.read_csv(detrendec_lc_saved)
+            x_detrended = detrend_df['time']
+            sap_detrend_sep_lc = [detrend_df['local SAP'], detrend_df['polyAM SAP'], detrend_df['GP SAP'], detrend_df['CoFiAM SAP']]
+            pdc_detrend_sep_lc = [detrend_df['local PDCSAP'], detrend_df['polyAM PDCSAP'], detrend_df['GP PDCSAP'], detrend_df['CoFiAM PDCSAP']]
+            yerr_detrended = detrend_df['yerr']
+            mask_detrended = detrend_df['mask']
 
 
 
@@ -253,6 +254,7 @@ def detrend_all(
                 "CoFiAM PDCSAP",
             ]
 
+            '''
             y_detrended = np.array(y_detrended)
             y_detrended_transpose = y_detrended.T
 
@@ -262,6 +264,12 @@ def detrend_all(
             )
 
             yerr_detrended = np.sqrt(yerr_detrended.astype(float) ** 2 + MAD ** 2)
+            '''
+            method_marg_detrended, yerr_detrended = ensemble_step(
+            y_detrended,          # shape (n_times, n_methods)
+            yerr_detrended,       # shape (n_times,)
+            method=ensemble_statistic
+            )
 
             # save detrend data as csv
             detrend_dict = {}
@@ -278,7 +286,7 @@ def detrend_all(
 
             detrend_df = pd.DataFrame(detrend_dict)
 
-            detrend_df.to_csv(path + "/" + "detrended.csv")
+            detrend_df.to_csv(path + "/" + "detrended.csv", index=False)
 
             # plot all detrended data
             plot_detrended_lc(
@@ -291,7 +299,7 @@ def detrend_all(
                 colors,
                 pdc_duration,
                 depth=input_depth,
-                figname=path + "/" + "individual_detrended.pdf",
+                figname=path + "/" + "individual_detrended_pre_rejection.pdf",
                 mask_width=input_mask_width
             )
 
@@ -306,7 +314,7 @@ def detrend_all(
                 ["k"],
                 pdc_duration,
                 depth=input_depth,
-                figname=path + "/" + "method_marg_detrended.pdf",
+                figname=path + "/" + "method_marg_detrended_pre_rejection.pdf",
                 mask_width=input_mask_width
             )
 
@@ -320,6 +328,9 @@ def detrend_all(
                 figname=path + "/" + "phase_folded.pdf",
             )
 
+            t0s_out = pdc_t0s
+            period_out = pdc_period
+            duration_out = pdc_duration
 
     # check if we should run just pdc
     elif flux_type == "pdc":
@@ -420,8 +431,9 @@ def detrend_all(
         yerr_detrended = pdc_local_yerr
         mask_detrended = pdc_local_mask
 
-        detrend_label = ["local", "polyAM", "GP", "CoFiAM"]
+        detrend_label = ["local PDCSAP", "polyAM PDCSAP", "GP PDCSAP", "CoFiAM PDCSAP"]
 
+        '''
         y_detrended = np.array(y_detrended)
         y_detrended_transpose = y_detrended.T
 
@@ -431,6 +443,12 @@ def detrend_all(
         )
 
         yerr_detrended = np.sqrt(yerr_detrended.astype(float) ** 2 + MAD ** 2)
+        '''
+        method_marg_detrended, yerr_detrended = ensemble_step(
+        y_detrended,          # shape (n_times, n_methods)
+        yerr_detrended,       # shape (n_times,)
+        method=ensemble_statistic
+        )
 
         # save detrend data as csv
         detrend_dict = {}
@@ -447,7 +465,7 @@ def detrend_all(
 
         detrend_df = pd.DataFrame(detrend_dict)
 
-        detrend_df.to_csv(path + "/" + "detrended_PDC.csv")
+        detrend_df.to_csv(path + "/" + "detrended_PDC.csv", index=False)
 
         # plot all detrended data
         plot_detrended_lc(
@@ -460,7 +478,7 @@ def detrend_all(
             colors,
             pdc_duration,
             depth=input_depth,
-            figname=path + "/" + "individual_detrended_PDC.pdf",
+            figname=path + "/" + "individual_detrended_PDC_pre_rejection.pdf",
             mask_width=input_mask_width
         )
 
@@ -475,7 +493,7 @@ def detrend_all(
             ["k"],
             pdc_duration,
             depth=input_depth,
-            figname=path + "/" + "method_marg_detrended_PDC.pdf",
+            figname=path + "/" + "method_marg_detrended_PDC_pre_rejection.pdf",
             mask_width=input_mask_width
         )
 
@@ -486,9 +504,12 @@ def detrend_all(
             pdc_period,
             pdc_t0s,
             20,
-            figname=path + "/" + "phase_folded_PDC.pdf",
+            figname=path + "/" + "phase_folded_PDC_pre_rejection.pdf",
         )
 
+        t0s_out = pdc_t0s
+        period_out = pdc_period
+        duration_out = pdc_duration
 
     # check if we should run just sap
     elif flux_type == "sap":
@@ -589,6 +610,7 @@ def detrend_all(
 
         detrend_label = ["local SAP", "polyAM SAP", "GP SAP", "CoFiAM SAP"]
 
+        '''
         y_detrended = np.array(y_detrended)
         y_detrended_transpose = y_detrended.T
 
@@ -598,6 +620,12 @@ def detrend_all(
         )
 
         yerr_detrended = np.sqrt(yerr_detrended.astype(float) ** 2 + MAD ** 2)
+        '''
+        method_marg_detrended, yerr_detrended = ensemble_step(
+        y_detrended,          # shape (n_times, n_methods)
+        yerr_detrended,       # shape (n_times,)
+        method=ensemble_statistic
+        )
 
         # saving detrend data as csv
         detrend_dict = {}
@@ -614,7 +642,7 @@ def detrend_all(
 
         detrend_df = pd.DataFrame(detrend_dict)
 
-        detrend_df.to_csv(path + "/" + "detrended_SAP.csv")
+        detrend_df.to_csv(path + "/" + "detrended_SAP.csv", index=False)
 
         # plot all detrended data
         plot_detrended_lc(
@@ -627,7 +655,7 @@ def detrend_all(
             colors,
             sap_duration,
             depth=input_depth,
-            figname=path + "/" + "individual_detrended_SAP.pdf",
+            figname=path + "/" + "individual_detrended_SAP_pre_rejection.pdf",
             mask_width=input_mask_width
         )
 
@@ -642,7 +670,7 @@ def detrend_all(
             ["k"],
             sap_duration,
             depth=input_depth,
-            figname=path + "/" + "method_marg_detrended_SAP.pdf",
+            figname=path + "/" + "method_marg_detrended_SAP_pre_rejection.pdf",
             mask_width=input_mask_width
         )
 
@@ -656,13 +684,31 @@ def detrend_all(
             figname=path + "/" + "phase_folded_SAP.pdf",
         )
 
+        t0s_out = sap_t0s
+        period_out = sap_period
+        duration_out = sap_duration
+
 
     else:
         print("ERROR!")
         print("invalid flux_type value entered...options are: pdc, sap, or both")
+        return None
 
+    orbital_data = pd.DataFrame({
+    'period': period_out,
+    'duration': duration_out,
+    })
 
-    return detrend_df
+    orbital_data.to_csv(path + '/' + 'orbital_data.csv', index=False)
+
+    t0s_output = pd.DataFrame({
+    't0s_in_data': t0s_out
+    })
+
+    t0s_output.to_csv(path + '/' + 't0s.csv', index=False)
+   
+
+    return detrend_df, t0s_out, period_out, duration_out
 
 
 def democratic_detrend(input_id, mission, flux_type='both', input_planet_number=1, input_dir='./',
@@ -671,12 +717,44 @@ def democratic_detrend(input_id, mission, flux_type='both', input_planet_number=
     input_no_pdc_problem_times=True, input_user_light_curve=None,
     input_polyAM=True, input_CoFiAM=True, input_GP=True, input_local=True):
     
-    df = detrend_all(input_id, mission, flux_type, input_planet_number, input_dir,
+    
+    # determine the path to directory to load and save files
+    if input_dir == "./":
+        today = date.today()
+        current_day = today.strftime("%B_%d_%Y")
+
+        foldername = (
+            input_id
+            + "/"
+            + input_id
+            + ".0"
+            + str(input_planet_number)
+            + "/"
+            + "detrending"
+            + "/"
+            + current_day
+        )
+        path = os.path.join(input_dir, foldername)
+
+        os.makedirs(path, exist_ok=True)
+
+    else:
+        path = input_dir
+
+
+    df, t0s, period, duration  = detrend_all(input_id, mission, flux_type, input_planet_number, input_dir,
     input_depth, input_period, input_t0, input_duration, input_mask_width, 
     input_show_plots, input_dont_bin, input_use_sap_problem_times, 
     input_no_pdc_problem_times, input_user_light_curve,
     input_polyAM, input_CoFiAM, input_GP, input_local)
 
+    # Fixed columns
+    fixed_cols = ['time', 'yerr', 'mask', 'method marginalized']
+
+    # Variable columns (everything else)
+    detrending_methods = [col for col in df.columns if col not in fixed_cols]
+
+    print("detrending methods used:", detrending_methods)
 
 
     # Initialize sublists
@@ -693,62 +771,53 @@ def democratic_detrend(input_id, mission, flux_type='both', input_planet_number=
     for index, row in df.iterrows():
         if len(time_temp) == 0:  # If it's the first data point
             # Check if all values in the specified columns are not NaN for the current row
-            if row[['local SAP', 'local PDCSAP', 
-                    'polyAM SAP', 'polyAM PDCSAP', 
-                    'GP SAP', 'GP PDCSAP', 
-                    'CoFiAM SAP', 'CoFiAM PDCSAP']].notna().all():
+            #if row[['local SAP', 'local PDCSAP', 
+            #        'polyAM SAP', 'polyAM PDCSAP', 
+            #        'GP SAP', 'GP PDCSAP', 
+            #        'CoFiAM SAP', 'CoFiAM PDCSAP']].notna().all():
                 
-                time_temp.append(row['time'])
-                y_temp.append(row[[
-                    'local SAP', 'local PDCSAP', 
-                    'polyAM SAP', 'polyAM PDCSAP', 
-                    'GP SAP', 'GP PDCSAP', 
-                    'CoFiAM SAP', 'CoFiAM PDCSAP']])
-                yerr_temp.append(row['yerr'])
+            time_temp.append(row['time'])
+            y_temp.append(row[detrending_methods])
+            yerr_temp.append(row['yerr'])
         else:
             time_diff = row['time'] - time_temp[-1]
             if time_diff > 5:  # If there is a gap greater than 50 in time
                 # Check if all values in the specified columns are not NaN for the current row
-                if row[['local SAP', 'local PDCSAP', 
-                        'polyAM SAP', 'polyAM PDCSAP', 
-                        'GP SAP', 'GP PDCSAP', 
-                        'CoFiAM SAP', 'CoFiAM PDCSAP']].notna().all():
-                    # Append current sublist to the main list
-                    time_epochs.append(time_temp)
-                    y_epochs.append(pd.DataFrame(y_temp))
-                    yerr_epochs.append(yerr_temp)
-                    # Reset temporary variables for the new sublist
-                    time_temp = [row['time']]
-                    y_temp = [row[[
-                        'local SAP', 'local PDCSAP', 
-                        'polyAM SAP', 'polyAM PDCSAP', 
-                        'GP SAP', 'GP PDCSAP', 
-                        'CoFiAM SAP', 'CoFiAM PDCSAP']]]
-                    yerr_temp = [row['yerr']]
+                #if row[['local SAP', 'local PDCSAP', 
+                #        'polyAM SAP', 'polyAM PDCSAP', 
+                #        'GP SAP', 'GP PDCSAP', 
+                #        'CoFiAM SAP', 'CoFiAM PDCSAP']].notna().all():
+                # Append current sublist to the main list
+                time_epochs.append(time_temp)
+                y_epochs.append(pd.DataFrame(y_temp))
+                yerr_epochs.append(yerr_temp)
+                # Reset temporary variables for the new sublist
+                time_temp = [row['time']]
+                y_temp = [row[detrending_methods]]
+                yerr_temp = [row['yerr']]
             else:
                 # Check if all values in the specified columns are not NaN for the current row
-                if row[['local SAP', 'local PDCSAP', 
-                        'polyAM SAP', 'polyAM PDCSAP', 
-                        'GP SAP', 'GP PDCSAP', 
-                        'CoFiAM SAP', 'CoFiAM PDCSAP']].notna().all():
-                    time_temp.append(row['time'])
-                    y_temp.append(row[[
-                        'local SAP', 'local PDCSAP', 
-                        'polyAM SAP', 'polyAM PDCSAP', 
-                        'GP SAP', 'GP PDCSAP', 
-                        'CoFiAM SAP', 'CoFiAM PDCSAP']])
-                    yerr_temp.append(row['yerr'])
+                #if row[['local SAP', 'local PDCSAP', 
+                #        'polyAM SAP', 'polyAM PDCSAP', 
+                #        'GP SAP', 'GP PDCSAP', 
+                #        'CoFiAM SAP', 'CoFiAM PDCSAP']].notna().all():
+                time_temp.append(row['time'])
+                y_temp.append(row[detrending_methods])
+                yerr_temp.append(row['yerr'])
 
     # Append the last sublist
     time_epochs.append(time_temp)
     y_epochs.append(pd.DataFrame(y_temp))
     yerr_epochs.append(yerr_temp)
 
-    detrending_methods = ['local PDCSAP', 'polyAM PDCSAP','GP PDCSAP', 'CoFiAM PDCSAP']
+    period = period[0]
+    duration=input_mask_width*duration[0]/24.
+
 
     # START OF METHOD REJECTION TESTS!!!!
     method_reject_figpath = path + "/" + "method_rejection_figures/"
-    
+    os.makedirs(method_reject_figpath, exist_ok=True)
+
     # DW method rejection test
     dw_sigma_test, DWMC_epochs, DWdetrend_epochs, DWupper_bound_epochs = reject_via_DW(time_epochs, y_epochs, yerr_epochs, t0s, period, duration, niter=10000)
     dw_rejection_plots(DWMC_epochs, DWdetrend_epochs, DWupper_bound_epochs, detrending_methods, method_reject_figpath)
@@ -762,7 +831,7 @@ def democratic_detrend(input_id, mission, flux_type='both', input_planet_number=
     # method rejection step
     y_epochs_post_rej = reject_epochs_by_white_noise_tests(y_epochs, dw_sigma_test, binning_sigma_test, detrending_methods)
     times_all_post_rej, y_all_post_rej, yerr_all_post_rej = merge_epochs(time_epochs, y_epochs_post_rej, yerr_epochs)
-    detrend_df_post_rej = ensemble_step(times_all_post_rej, y_all_post_rej, yerr_all_post_rej, detrending_methods)
+    detrend_df_post_rej = ensemble_step(times_all_post_rej, y_all_post_rej, yerr_all_post_rej, detrending_methods, df['mask'])
 
 
     ## now to plot and save data!!
@@ -780,14 +849,28 @@ def democratic_detrend(input_id, mission, flux_type='both', input_planet_number=
         
     # plot all detrended data
     plot_detrended_lc(times_all_post_rej, y_all_post_rej, detrending_methods,
-                      t0s, float(6*duration)/period, period,
+                      t0s, float(6*duration)/period/input_mask_width, period,
                       colors, duration*24., depth=0.01, mask_width=1,
-                      figname = './individual_detrended_post_rejection.pdf')
+                      figname = path+'/individual_detrended_post_rejection.pdf')
+
+    # plot method marginalized detrended data
+    plot_detrended_lc(
+        times_all_post_rej,
+        [detrend_df_post_rej["method marginalized"]],
+        ["method marg"],
+        t0s,
+        float(6*duration)/period/input_mask_width, 
+        period,
+        ["k"], 
+        duration*24., depth=0.01, mask_width=1,
+        figname=path + "/" + "method_marg_detrended_post_rejection.pdf"
+            )
 
 
     #save post method rejection as csv
-    detrend_df_post_rej.to_csv(path + "/" + "detrended_post_method_rejection.csv")
+    detrend_df_post_rej.to_csv(path + "/" + "detrended_post_method_rejection.csv", index=False)
 
     return detrend_df_post_rej
+
 
 
