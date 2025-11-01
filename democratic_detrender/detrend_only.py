@@ -1,3 +1,10 @@
+"""
+Detrend-only module for isolated light curve detrending.
+
+This module provides functionality for detrending light curves without 
+the full democratic detrending pipeline.
+"""
+
 #this works for 1 planet systems only for now!
 
 from datetime import date
@@ -10,6 +17,17 @@ import warnings
 import json
 
 def detrend_only():
+    """
+    Perform isolated detrending of light curve data.
+    
+    Currently not supported - placeholder function for future implementation
+    of standalone detrending functionality without method rejection.
+    
+    Returns
+    -------
+    None
+        Function is not currently implemented.
+    """
     print("NOT CURRENTLY SUPPORTED")
     return None
 

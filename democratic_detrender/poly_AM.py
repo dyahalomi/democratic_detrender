@@ -9,6 +9,23 @@ from democratic_detrender.manipulate_data import split_around_transits
 
 
 def polyAM_function(times, fluxes, degree):
+    """
+    Fit a polynomial model to time series data using numerical stability.
+    
+    Parameters
+    ----------
+    times : array-like
+        Time values for the data points.
+    fluxes : array-like
+        Flux values for the data points.
+    degree : int
+        Degree of the polynomial to fit.
+        
+    Returns
+    -------
+    numpy.ndarray
+        Polynomial model evaluated at the input times.
+    """
     #poly_coeffs = np.polyfit(times, fluxes, degree)
     #model = np.polyval(poly_coeffs, times)
     
@@ -30,6 +47,41 @@ def polyAM_iterative(
     max_degree=30,
     min_degree=1,
 ):
+    """
+    Iteratively fit polynomials of increasing degree to minimize autocorrelation.
+    
+    This function implements the polynomial Autocorrelation Minimization (polyAM)
+    method by testing polynomial fits of different degrees and selecting the one
+    that minimizes autocorrelation in the residuals based on Durbin-Watson statistics.
+    
+    Parameters
+    ----------
+    times : array-like
+        Time values for the data points.
+    fluxes : array-like
+        Flux values for the data points.
+    mask : array-like
+        Boolean mask indicating transit points to exclude from fitting.
+    mask_fitted_planet : array-like
+        Boolean mask for the specific planet being fitted.
+    local_start_x : float
+        Start time for the local fitting window.
+    local_end_x : float
+        End time for the local fitting window.
+    max_degree : int, optional
+        Maximum polynomial degree to test. Default is 30.
+    min_degree : int, optional
+        Minimum polynomial degree to test. Default is 1.
+        
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - numpy.ndarray : Best polynomial model
+        - int : Best polynomial degree
+        - float : Best Durbin-Watson statistic value
+        - int : Maximum degree tested
+    """
     ### this function utilizes polyAM_function above, iterates it up to max_degree.
     no_pre_transit = False
     no_post_transit = False
@@ -128,6 +180,37 @@ def polyAM_iterative(
 def polynomial_method(
     x, y, yerr, mask, mask_fitted_planet, t0s, duration, period, local_x
 ):
+    """
+    Apply polynomial AM detrending method to multiple epochs of light curve data.
+    
+    Parameters
+    ----------
+    x : list of array-like
+        List of time arrays for each epoch.
+    y : list of array-like
+        List of flux arrays for each epoch.
+    yerr : list of array-like
+        List of flux error arrays for each epoch.
+    mask : list of array-like
+        List of transit mask arrays for each epoch.
+    mask_fitted_planet : list of array-like
+        List of fitted planet mask arrays for each epoch.
+    t0s : array-like
+        Transit center times.
+    duration : float
+        Transit duration in hours.
+    period : float
+        Orbital period in days.
+    local_x : list of array-like
+        List of local time windows for each epoch.
+        
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - numpy.ndarray : Detrended light curve data
+        - list : Durbin-Watson statistics for each epoch
+    """
 
     poly_mod = []
     poly_mod_all = []

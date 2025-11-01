@@ -13,6 +13,25 @@ from democratic_detrender.poly_AM import polyAM_function
 
 
 def BIC(model, data, errors, nparams):
+    """
+    Calculate the Bayesian Information Criterion (BIC) for model selection.
+    
+    Parameters
+    ----------
+    model : array-like
+        Model predictions.
+    data : array-like
+        Observed data values.
+    errors : array-like
+        Uncertainties in the data.
+    nparams : int
+        Number of parameters in the model.
+        
+    Returns
+    -------
+    float
+        BIC value for the model.
+    """
     chi2 = np.nansum(((model - data) / errors) ** 2)
     BICval = nparams * np.log(len(data)) + chi2
     return BICval
@@ -20,6 +39,23 @@ def BIC(model, data, errors, nparams):
 
 ### this function spits out the best fit line!
 def polyLOC_function(times, fluxes, degree):
+    """
+    Fit a polynomial model to time series data for local detrending.
+    
+    Parameters
+    ----------
+    times : array-like
+        Time values for the data points.
+    fluxes : array-like
+        Flux values for the data points.
+    degree : int
+        Degree of the polynomial to fit.
+        
+    Returns
+    -------
+    numpy.ndarray
+        Polynomial model evaluated at the input times.
+    """
 
     times = np.array(times, dtype=float)
     fluxes = np.array(fluxes, dtype=float)
@@ -36,6 +72,36 @@ def polyLOC_function(times, fluxes, degree):
 
 
 def polyLOC_iterative(times, fluxes, errors, mask, max_degree=30, min_degree=1):
+    """
+    Iteratively fit polynomials of increasing degree using BIC for model selection.
+    
+    This function implements local polynomial detrending by testing polynomial
+    fits of different degrees and selecting the one with the minimum BIC value.
+    
+    Parameters
+    ----------
+    times : array-like
+        Time values for the data points.
+    fluxes : array-like
+        Flux values for the data points.
+    errors : array-like
+        Uncertainty values for the data points.
+    mask : array-like
+        Boolean mask indicating points to exclude from fitting.
+    max_degree : int, optional
+        Maximum polynomial degree to test. Default is 30.
+    min_degree : int, optional
+        Minimum polynomial degree to test. Default is 1.
+        
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - numpy.ndarray : Best polynomial model
+        - int : Best polynomial degree
+        - float : Best BIC value
+        - int : Maximum degree tested
+    """
     ### this function utilizes polyLOC_function above, iterates it up to max_degree.
     ### max degree may be calculated using max_order function
 
@@ -74,6 +140,36 @@ def local_method(
     duration,
     period,
 ):
+    """
+    Apply local polynomial detrending method to light curve data.
+    
+    This method fits local polynomials to small sections of the light curve
+    around transit events, using BIC for optimal polynomial degree selection.
+    
+    Parameters
+    ----------
+    x_epochs : list of array-like
+        List of time arrays for each epoch.
+    y_epochs : list of array-like
+        List of flux arrays for each epoch.
+    yerr_epochs : list of array-like
+        List of flux error arrays for each epoch.
+    mask_epochs : list of array-like
+        List of transit mask arrays for each epoch.
+    mask_fitted_planet_epochs : list of array-like
+        List of fitted planet mask arrays for each epoch.
+    t0s : array-like
+        Transit center times.
+    duration : float
+        Transit duration in hours.
+    period : float
+        Orbital period in days.
+        
+    Returns
+    -------
+    numpy.ndarray
+        Detrended light curve data from local polynomial method.
+    """
 
     x = np.concatenate(x_epochs, axis=0)
     y = np.concatenate(y_epochs, axis=0)

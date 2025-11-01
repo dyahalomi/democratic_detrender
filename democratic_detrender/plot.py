@@ -26,6 +26,42 @@ def plot_transit(
     problem_times_input=None,
     dont_bin=False,
 ):
+    """
+    Plot a single transit with interactive problem time marking.
+    
+    Parameters
+    ----------
+    xs_star : array-like
+        Time values not in transit.
+    ys_star : array-like
+        Flux values not in transit.
+    xs_transit : array-like
+        Time values in transit.
+    ys_transit : array-like
+        Flux values in transit.
+    t0 : float
+        Midtransit time.
+    period : array-like
+        Planet period to define plotting limits.
+    title : str
+        Title for the plot.
+    bin_window : float
+        Window size for binning data.
+    object_id : str
+        Object identifier for plot title.
+    problem_times_input : list, optional
+        Pre-existing problem times. Default is None.
+    dont_bin : bool, optional
+        Whether to skip binning. Default is False.
+        
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - matplotlib.widgets.Slider : Time slider widget
+        - matplotlib.widgets.Button : Save button widget  
+        - list : Updated problem times list
+    """
     # xs_star = time not in transit
     # ys_star = flux not in transit
     # xs_transit = times in transit
@@ -136,11 +172,40 @@ def plot_transits(
     dont_bin=False,
     data_name=None,
 ):
-    # xs = times
-    # ys = fluxes
-    # mask = masks for transit
-    # t0s = midtransits in data
-    # period = planet period to define plotting limits
+    """
+    Plot multiple transits with interactive problem time marking.
+    
+    Parameters
+    ----------
+    x_transits : list of array-like
+        List of time arrays for each transit epoch.
+    y_transits : list of array-like
+        List of flux arrays for each transit epoch.
+    mask_transits : list of array-like
+        List of transit mask arrays for each epoch.
+    t0s : array-like
+        Midtransit times in the data.
+    period : float
+        Planet period to define plotting limits.
+    bin_window : float
+        Window size for binning data.
+    object_id : str
+        Object identifier for plot titles.
+    problem_times_input : list, optional
+        Pre-existing problem times. Default is None.
+    dont_bin : bool, optional
+        Whether to skip binning. Default is False.
+    data_name : str, optional
+        Base name for saving transit data files. Default is None.
+        
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - list : Slider widgets for each transit
+        - list : Button widgets for each transit
+        - list : Flattened list of all marked problem times
+    """
     plt.close("all")
     sliders, buttons, problem_times = [], [], []
 
@@ -208,23 +273,38 @@ def plot_detrended_lc(
     title=None,
 ):
     """
-    inputs:
-    x = times
-    ys = [detrended light curves] of length N number of detrendings
-    detrend_labels = [detrending type] of length N number of detrendings
-    t0s_in_data = midtransits in data
-    window = what fraction of the period to plot on either side of transit (ie. window=1/2 means 1/2 period on either side)
-    period = planet period to define plotting limit
-    colors = [colors] of length N number of detrendings
-    figname = Name of file if you want to save figure
+    Plot detrended light curves with multiple methods.
     
-    return:
+    Parameters
+    ----------
+    xs : array-like
+        Time values.
+    ys : list of array-like
+        List of detrended light curves from different methods.
+    detrend_labels : list of str
+        Labels for each detrending method.
+    t0s_in_data : array-like
+        Midtransit times in the data.
+    window : float
+        Fraction of the period to plot on either side of transit.
+    period : float
+        Planet period to define plotting limits.
+    colors : list of str
+        Colors for each detrending method.
+    duration : float
+        Transit duration in hours.
+    mask_width : float, optional
+        Width multiplier for transit mask. Default is 1.1.
+    depth : float, optional
+        Expected transit depth for plot scaling. Default is None.
+    figname : str, optional
+        Filename to save the figure. Default is None.
+    title : str, optional
+        Title for the plot. Default is None.
+        
+    Returns
+    -------
     None
-    
-    
-    
-    
-    
     """
     import math
 
@@ -372,6 +452,28 @@ def plot_detrended_lc(
 
 
 def plot_phase_fold_lc(time, lc, period, t0s, xlim, figname):
+    """
+    Create a phase-folded light curve plot.
+    
+    Parameters
+    ----------
+    time : array-like
+        Time values.
+    lc : array-like
+        Light curve flux values.
+    period : float
+        Orbital period for phase folding.
+    t0s : array-like
+        Transit center times.
+    xlim : float
+        X-axis limit factor for the plot.
+    figname : str, optional
+        Filename to save the figure.
+        
+    Returns
+    -------
+    None
+    """
 
     plt.close("all")
 
@@ -393,12 +495,30 @@ def plot_outliers(
     time, flux, time_out, flux_out, moving_median, kepler_quarters, figname, object_id
 ):
     """
-    input:
+    Plot light curve data with identified outliers highlighted.
+    
+    Parameters
+    ----------
+    time : array-like
+        Original time values including outliers.
+    flux : array-like
+        Original flux values including outliers.
+    time_out : array-like
+        Time values with outliers removed.
+    flux_out : array-like
+        Flux values with outliers removed.
+    moving_median : array-like
+        Moving median values for reference.
+    kepler_quarters : array-like
+        Quarter boundaries for vertical lines.
+    figname : str
+        Filename to save the figure.
+    object_id : str
+        Object identifier for the plot title.
+        
+    Returns
     -------
-    time = array of time values 
-    flux = array of flux values 
-    time_out = array of time values without outliers
-    flux_out = array of flux values without outliers
+    None
     """
 
     plt.close("all")
@@ -435,6 +555,26 @@ def plot_outliers(
 
 
 def plot_split_data(x_split, y_split, t0s, figname, object_id):
+    """
+    Plot light curve data split by quarters or observational segments.
+    
+    Parameters
+    ----------
+    x_split : list of array-like
+        List of time arrays for each quarter/segment.
+    y_split : list of array-like  
+        List of flux arrays for each quarter/segment.
+    t0s : array-like
+        Transit center times for vertical reference lines.
+    figname : str
+        Filename to save the figure.
+    object_id : str
+        Object identifier for the plot title.
+        
+    Returns
+    -------
+    None
+    """
 
     plt.close("all")
     fig, ax = plt.subplots(nrows=len(x_split), figsize=[18, 3 * len(x_split)])
@@ -485,15 +625,32 @@ def plot_individual_outliers(
     time, flux, time_out, flux_out, t0s, period, window, depth, figname
 ):
     """
-    input:
+    Plot individual transit epochs highlighting outliers.
+    
+    Parameters
+    ----------
+    time : array-like
+        Original time values including outliers.
+    flux : array-like
+        Original flux values including outliers.
+    time_out : array-like
+        Time values with outliers removed.
+    flux_out : array-like
+        Flux values with outliers removed.
+    t0s : array-like
+        Midtransit times in the data.
+    period : float
+        Planet period to define plotting limits.
+    window : float
+        Fraction of the period to plot on either side of transit.
+    depth : float
+        Transit depth for plot scaling.
+    figname : str
+        Filename to save the figure.
+        
+    Returns
     -------
-    time = array of time values 
-    flux = array of flux values 
-    time_out = array of time values without outliers
-    flux_out = array of flux values without outliers
-    period = planet period to define plotting limit 
-    window = what fraction of the period to plot on either side of transit (ie. window=1/2 means 1/2 period on either side)
-    t0s = midtransits in data
+    None
     """
 
     plt.close("all")

@@ -38,6 +38,20 @@ def get_detrended_lc(y, detrending_model):
 
 
 def determine_cadence(times):
+    """
+    Determine the observational cadence from time series data.
+    
+    Parameters
+    ----------
+    times : array-like
+        Array of observation times.
+        
+    Returns
+    -------
+    float
+        The most common time gap between consecutive observations,
+        representing the cadence of the observations.
+    """
     time_gaps = {}
     for ii in range(1, len(times)):
         time_gap = np.round(times[ii] - times[ii - 1], 4)
@@ -52,6 +66,21 @@ def determine_cadence(times):
 
 
 def find_nearest(array, value):
+    """
+    Find the nearest value in an array to a given target value.
+    
+    Parameters
+    ----------
+    array : array-like
+        Array of values to search within.
+    value : float
+        Target value to find the nearest match for.
+        
+    Returns
+    -------
+    float
+        The value in the array closest to the target value.
+    """
     # returns the value in an array closest to another input value
 
     array = np.asarray(array)
@@ -60,6 +89,25 @@ def find_nearest(array, value):
 
 
 def bin_data(xs, ys, window):
+    """
+    Bin data points into regular intervals and compute mean values.
+    
+    Parameters
+    ----------
+    xs : array-like
+        X-coordinates (typically time values) of data points.
+    ys : array-like
+        Y-coordinates (typically flux values) of data points.
+    window : float
+        Width of each bin.
+        
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - numpy.ndarray : Bin edges for x-coordinates
+        - list : Mean y-values for each bin
+    """
 
     import warnings
 

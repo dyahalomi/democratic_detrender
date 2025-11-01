@@ -1,9 +1,35 @@
+"""
+General method rejection functions for democratic detrending.
+
+This module provides functions for rejecting detrending methods based on
+white noise tests and combining the results from multiple methods.
+"""
+
 import numpy as np
 import pandas as pd
 from scipy.stats import median_abs_deviation
 
 
 def reject_epochs_by_white_noise_tests(y_epochs, dw_sigma_test, binning_sigma_test, detrending_methods):
+    """
+    Reject detrending methods for specific epochs based on white noise tests.
+    
+    Parameters
+    ----------
+    y_epochs : list of pandas.DataFrame
+        List of DataFrames containing detrended flux values for each epoch.
+    dw_sigma_test : dict
+        Dictionary containing Durbin-Watson test results for each method.
+    binning_sigma_test : dict
+        Dictionary containing binning test results for each method.
+    detrending_methods : list
+        List of detrending method names.
+        
+    Returns
+    -------
+    list
+        Updated y_epochs with NaN values for methods that failed tests.
+    """
     
     for col in detrending_methods:
         for epoch in range(0, len(dw_sigma_test[col])):
@@ -22,6 +48,26 @@ def reject_epochs_by_white_noise_tests(y_epochs, dw_sigma_test, binning_sigma_te
 
 
 def merge_epochs(time_epochs, y_epochs, yerr_epochs):
+    """
+    Merge data from multiple epochs into single arrays.
+    
+    Parameters
+    ----------
+    time_epochs : list of array-like
+        List of time arrays for each epoch.
+    y_epochs : list of pandas.DataFrame
+        List of DataFrames containing flux values for each epoch.
+    yerr_epochs : list of array-like
+        List of flux error arrays for each epoch.
+        
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - list : Merged time values from all epochs
+        - list : Merged flux values from all epochs (one array per method)
+        - list : Merged flux error values from all epochs
+    """
     # Merging the list of lists into a single list using list comprehension
     times_all = [item for sublist in time_epochs for item in sublist]
     yerr_all = [item for sublist in yerr_epochs for item in sublist]
@@ -38,6 +84,28 @@ def merge_epochs(time_epochs, y_epochs, yerr_epochs):
 
     
 def ensemble_step(times_all, y_all, yerr_all, detrending_methods, mask):
+    """
+    Combine multiple detrending methods into an ensemble result.
+    
+    Parameters
+    ----------
+    times_all : array-like
+        Time values for all data points.
+    y_all : list of array-like
+        List of flux arrays from different detrending methods.
+    yerr_all : array-like
+        Flux error values for all data points.
+    detrending_methods : list
+        List of detrending method names.
+    mask : array-like
+        Transit mask values.
+        
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame containing ensemble detrending results with time, flux values
+        from each method, uncertainties, mask, and method-marginalized result.
+    """
 
     x_detrended = np.array(times_all)
     y_detrended = np.array(y_all)
