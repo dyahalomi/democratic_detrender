@@ -370,10 +370,8 @@ def get_light_curve(
         t0s = t0s - 2454833
 
         # pull in Kepler LC
-        # QUICK FIX NOT LONG TERM USING LONG CADENCE DATA!!!!
-        # REMOVE THIS CHANGE BEFORE PUSHING
-        # ISSUE IS WITH OUTLIER REJECTION, BUT WILL LIKELY NEED TO MAKE OTHER SPEED UPS....
-        # DYAHALOMI MARCH 16, 2024
+        # CURRENTLY ONLY LOADS LONG CADENCE DATA BY DEFAULT
+        # ISSUE IS WITH RUN TIME IN OUTLIER REJECTION, BUT WILL LIKELY NEED TO MAKE OTHER SPEED UPS....
         lc_files = lk.search_lightcurve(
             tic_id, mission="Kepler", author="Kepler", cadence="long"
         ).download_all(quality_bitmask="default", flux_column=flux_type)
