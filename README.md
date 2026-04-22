@@ -7,21 +7,24 @@ installation instructions, tutorials, and the API.
 
 ## Citation
 
-If you use this code in your research, please cite Yahalomi, Kipping, et al. 2026 [ADS](https://ui.adsabs.harvard.edu/abs/2024arXiv241109753Y/abstract) [arXiv](https://arxiv.org/abs/2411.09753):
+If you use this code in your research, please cite Yahalomi, Kipping, et al. 2026 [ADS](https://ui.adsabs.harvard.edu/abs/2026ApJS..283...51Y/abstract) [arXiv](https://arxiv.org/abs/2411.09753):
 
-    @ARTICLE{2024arXiv241109753Y,
-    author = {{Yahalomi}, Daniel A. and {Kipping}, David and {Solano-Oropeza}, Diana and {Li}, Madison and {Poddar}, Avishi and {Xunhe} and {Zhang} and {Abaakil}, Yassine and {Cassese}, Benjamin and {Teachey}, Alex and {Liu}, Jiajing and {Sundai}, Farai and {Valaskovic}, Lila},
-    title = "{The democratic detrender: Ensemble-Based Removal of the Nuisance Signal in Stellar Time-Series Photometry}",
-    journal = {arXiv e-prints},
-    keywords = {Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics, Astrophysics - Solar and Stellar Astrophysics},
-    year = 2024,
-    month = nov,
-    eid = {arXiv:2411.09753},
-    pages = {arXiv:2411.09753},
-    doi = {10.48550/arXiv.2411.09753},
-    archivePrefix = {arXiv},
-    eprint = {2411.09753},
-    primaryClass = {astro-ph.EP},
-    adsurl = {https://ui.adsabs.harvard.edu/abs/2024arXiv241109753Y},
-    adsnote = {Provided by the SAO/NASA Astrophysics Data System}
-    }
+    @ARTICLE{2026ApJS..283...51Y,
+       author = {{Yahalomi}, Daniel A. and {Kipping}, David and {Solano-Oropeza}, Diana and {Li}, Madison and {Poddar}, Avishi and {Zhang}, Xunhe (Andrew) and {Abaakil}, Yassine and {Cassese}, Ben and {Jennings}, Jeff and {Larsen}, Skylar and {Turner}, Jake D. and {Teachey}, Alex and {Liu}, Jiajing and {Sundai}, Farai and {Valaskovic}, Lila},
+        title = "{The democratic detrender: Ensemble-based Removal of the Nuisance Signal in Stellar Time-series Photometry}",
+      journal = {\apjs},
+     keywords = {Open source software, Transits, Astronomy data analysis, Astrostatistics, Stellar activity, 1866, 1711, 1858, 1882, 1580, Earth and Planetary Astrophysics, Instrumentation and Methods for Astrophysics, Solar and Stellar Astrophysics},
+         year = 2026,
+        month = apr,
+       volume = {283},
+       number = {2},
+          eid = {51},
+        pages = {51},
+          doi = {10.3847/1538-4365/ae43c2},
+archivePrefix = {arXiv},
+       eprint = {2411.09753},
+ primaryClass = {astro-ph.EP},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2026ApJS..283...51Y},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+
