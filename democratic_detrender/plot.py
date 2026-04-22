@@ -26,21 +26,12 @@ def plot_transit(
     problem_times_input=None,
     dont_bin=False,
 ):
-    # xs_star = time not in transit
-    # ys_star = flux not in transit
-    # xs_transit = times in transit
-    # ys_tranist = fluxed in transit
-    # t0 = midtransit
-    # period = planet period to define plotting limit
-
     global problem_times
 
-    if problem_times_input == None:
+    if problem_times_input is None:
         problem_times = []
-
     else:
-        problem_times_input.sort()
-        problem_times = problem_times_input
+        problem_times = sorted(problem_times_input.copy())
 
     window = 1.0 / 2.0
 
@@ -68,9 +59,9 @@ def plot_transit(
     else:
         ymax = ymax / 1.2
 
-    t_init = 0
+    t_init = t0
 
-    y = np.arange(ymin, ymax, 0.000001)
+    y = np.linspace(ymin, ymax, 1000)
     t = t_init * np.ones(np.shape(y))
     l = ax.plot(t, y, lw=2, color="k")[0]
 
@@ -95,7 +86,7 @@ def plot_transit(
     ax.set_ylabel("intensity")
     ax.set_xlim(xmin, xmax)
     ax.set_ylim(ymin, ymax)
-    ax.ticklabel_format(useOffset=False)  # disable scientific notation
+    ax.ticklabel_format(useOffset=False)
     ax.set_title(object_id, fontsize=27)
 
     axtime = plt.axes([0.197, 0.1, 0.702, 0.09])
@@ -105,7 +96,6 @@ def plot_transit(
 
     def update(val):
         l.set_xdata(val * np.ones(np.shape(y)))
-
         fig.canvas.draw_idle()
 
     stime.on_changed(update)
@@ -115,14 +105,15 @@ def plot_transit(
 
     def save(event):
         global problem_times
-        if stime.val not in problem_times:
-            problem_times.append(stime.val)
+        val = float(stime.val)
+        if val not in problem_times:
+            problem_times.append(val)
             problem_times.sort()
+            print("saved time:", val)
 
     button.on_clicked(save)
 
     return (stime, button, problem_times)
-
 
 def plot_transits(
     x_transits,
@@ -136,25 +127,23 @@ def plot_transits(
     dont_bin=False,
     data_name=None,
 ):
-    # xs = times
-    # ys = fluxes
-    # mask = masks for transit
-    # t0s = midtransits in data
-    # period = planet period to define plotting limits
     plt.close("all")
-    sliders, buttons, problem_times = [], [], []
+    sliders, buttons = [], []
+    all_problem_times = []
 
     if len(t0s) != len(x_transits):
         print("ERROR, length of t0s doesn't match length of x_transits")
 
-    for ii in range(0, len(t0s)):
+    current_problem_times = [] if problem_times_input is None else sorted(problem_times_input.copy())
+
+    for ii in range(len(t0s)):
         t0 = t0s[ii]
         xs = x_transits[ii]
         ys = y_transits[ii]
         mask = mask_transits[ii]
-        title = "epoch " + str(ii + 1)
+        title = f"epoch {ii+1}"
 
-        slider, button, problem_times_epoch = plot_transit(
+        slider, button, current_problem_times = plot_transit(
             xs[~mask],
             ys[~mask],
             xs[mask],
@@ -164,34 +153,24 @@ def plot_transits(
             title,
             bin_window,
             object_id,
-            problem_times_input=problem_times_input,
+            problem_times_input=current_problem_times,
             dont_bin=dont_bin,
         )
+
         sliders.append(slider)
         buttons.append(button)
-        problem_times.append(problem_times_epoch)
 
         if data_name is not None:
-            # saving detrend data as csv
-            detrend_dict = {}
+            detrend_df = pd.DataFrame({
+                "time": xs,
+                "flux": ys,
+                "mask": mask
+            })
+            detrend_df.to_csv(f"{data_name}{ii+1}.csv", index=False)
 
-            detrend_dict["time"] = xs
-            detrend_dict["flux"] = ys
-            detrend_dict["mask"] = mask
+        plt.show(block=True)   # blocks until window is closed
 
-            detrend_df = pd.DataFrame(detrend_dict)
-
-            print("saving data to " + data_name + str(ii + 1) + ".csv")
-
-            detrend_df.to_csv(data_name + str(ii + 1) + ".csv")
-
-        plt.show()
-
-    # turn list of lists into a flattened list
-    problem_times_flat = [item for sublist in problem_times for item in sublist]
-
-    return sliders, buttons, problem_times_flat
-
+    return sliders, buttons, current_problem_times
 
 def plot_detrended_lc(
     xs,
