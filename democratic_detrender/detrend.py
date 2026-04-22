@@ -693,8 +693,8 @@ def detrend_all(
         return None
 
     orbital_data = pd.DataFrame({
-    'period': period_out,
-    'duration': duration_out,
+    'period': [period_out],
+    'duration': [duration_out],
     })
 
     orbital_data.to_csv(path + '/' + 'orbital_data.csv', index=False)

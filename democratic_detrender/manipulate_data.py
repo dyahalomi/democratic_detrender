@@ -213,7 +213,6 @@ def split_around_transits(
         model_split = []
 
     for t0 in t0s:
-
         xlims.append([float(t0 - (period * window)), float(t0 + (period * window))])
         x_split.append([])
         y_split.append([])
