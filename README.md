@@ -7,7 +7,7 @@ installation instructions, tutorials, and the API.
 
 ## Citation
 
-If you use this code in your research, please cite Yahalomi, Kipping, et al. 2026 [ADS](https://ui.adsabs.harvard.edu/abs/2026ApJS..283...51Y/abstract) [arXiv](https://arxiv.org/abs/2411.09753):
+If you use this code in your research, please cite Yahalomi, Kipping, et al. 2026 [ADS](https://ui.adsabs.harvard.edu/abs/2026ApJS..283...51Y/abstract) / [arXiv](https://arxiv.org/abs/2411.09753):
 
     @ARTICLE{2026ApJS..283...51Y,
        author = {{Yahalomi}, Daniel A. and {Kipping}, David and {Solano-Oropeza}, Diana and {Li}, Madison and {Poddar}, Avishi and {Zhang}, Xunhe (Andrew) and {Abaakil}, Yassine and {Cassese}, Ben and {Jennings}, Jeff and {Larsen}, Skylar and {Turner}, Jake D. and {Teachey}, Alex and {Liu}, Jiajing and {Sundai}, Farai and {Valaskovic}, Lila},
