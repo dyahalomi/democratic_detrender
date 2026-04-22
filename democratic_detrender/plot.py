@@ -52,7 +52,7 @@ def plot_transit(
         xtransit_bin, ytransit_bin = bin_data(xs_transit, ys_transit, bin_window)
         bin_colors = ["#00008B", "#DC143C"]
 
-    xmin, xmax = t0 - (period * window)[0], t0 + (period * window)[0]
+    xmin, xmax = t0 - (period * window), t0 + (period * window)
 
     ymin_transit, ymax_transit = np.nanmin(ys_transit), np.nanmax(ys_transit)
     ymin_star, ymax_star = np.nanmin(ys_star), np.nanmax(ys_star)
