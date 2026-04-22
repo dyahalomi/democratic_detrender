@@ -231,7 +231,7 @@ def plot_detrended_lc(
             fig, ax = plt.subplots(
                 ncols=3,
                 nrows=math.ceil(len(t0s_in_data) / 3),
-                figsize=[27, len(t0s_in_data) * len(ys) / 4],
+                figsize=[27, len(t0s_in_data) * len(ys)],
                 sharey=True,
             )
 
