@@ -12,10 +12,10 @@ pip install git+https://github.com/dyahalomi/democratic_detrender
 If you want to use the problem time identifying module in Jupyter Notebook you'll want to:
 pip install PyQt5
 
-And then in your notebook call
+And then in your notebook call:
 %matplotlib qt
 
-For figure output, you'll want to switch back to
+For figure output, you'll want to switch back to:
 %matplotlib inline
 
 
