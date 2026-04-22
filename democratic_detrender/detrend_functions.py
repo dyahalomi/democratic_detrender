@@ -115,15 +115,15 @@ def trim_jump_times(x, y, yerr, mask, mask_fitted_planet, t0s, period, jump_time
 
             # # assuming all went well
             epoch_split = [jump_start, jump_end]
-            start_index = int(np.where(xs == epoch_split[0])[0])
-            end_index = int(np.where(x == epoch_split[1])[0])
+            start_index = np.argmin(np.abs(xs - epoch_split[0]))
+            end_index = np.argmin(np.abs(xs - epoch_split[1]))
 
             # now to append current epoch's trimmed (if applicable) data to epoch arrays
-            x_epochs.append(xs[start_index:end_index])
-            y_epochs.append(ys[start_index:end_index])
-            yerr_epochs.append(yerrs[start_index:end_index])
-            mask_epochs.append(masks[start_index:end_index])
-            mask_fitted_planet_epochs.append(mask_fitted_planets[start_index:end_index])
+            x_epochs.append(xs[start_index:end_index+1])
+            y_epochs.append(ys[start_index:end_index+1])
+            yerr_epochs.append(yerrs[start_index:end_index+1])
+            mask_epochs.append(masks[start_index:end_index+1])
+            mask_fitted_planet_epochs.append(mask_fitted_planets[start_index:end_index+1])
 
         # wrapping it all up!
         x_epochs = np.array(x_epochs, dtype=object)
