@@ -75,3 +75,9 @@ html_context = {"default_mode": "light"}
 html_sidebars = {
     "**": ["navbar-logo.html", "search-field.html", "sbt-sidebar-nav.html"]
 }
+
+# -- nbsphinx options for faster builds -----------------------------------
+# Skip notebook execution during development - shows cached/pre-executed cells
+#never or cache
+nbsphinx_execute = 'never'
+# Or use 'cache' to execute only if source changes: nbsphinx_execute = 'cache'
