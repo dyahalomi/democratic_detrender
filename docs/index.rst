@@ -31,7 +31,10 @@ For anything else, please don’t hesitate to `reach out <daniel.yahalomi@columb
     :maxdepth: 1
     :caption: Tutorials
 
-    xx <tutorials/blank_tutorial.ipynb>
+    tutorials/identifying_problem_times
+    #tutorials/load_lc_tutorial.ipynb
+    #tutorials/detrend_tutorial.ipynb
+    #tutorials/method_rejection_tutorial.ipynb
 
 .. toctree::
     :hidden:
@@ -47,6 +50,7 @@ For anything else, please don’t hesitate to `reach out <daniel.yahalomi@columb
     :maxdepth: 1
     :caption: Reference
 
+    Glossary <glossary>
     Index <genindex>
     Changelog <https://github.com/dyahalomi/democratic_detrender/blob/main/HISTORY.rst>
     GitHub <https://github.com/dyahalomi/democratic_detrender>
