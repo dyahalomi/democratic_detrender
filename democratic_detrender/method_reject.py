@@ -15,8 +15,9 @@ def method_reject(path, input_depth=0.01, input_period=None, input_duration=None
     
     
 
-    # Load the file into a Pandas DataFrame, skipping the first column
-    df = pd.read_csv(path+'/detrended.csv')
+    # Load the detrending output produced before method rejection.
+    pre_rejection_path = path + '/detrended_pre_rejection.csv'
+    df = pd.read_csv(pre_rejection_path)
 
     orbital_data = pd.read_csv(path+'/orbital_data.csv')
 
@@ -120,8 +121,8 @@ def method_reject(path, input_depth=0.01, input_period=None, input_duration=None
 
 
     #save post method rejection as csv
-    detrend_df_post_rej.to_csv(path + "/" + "detrended_post_method_rejection.csv", index=False)
+    detrend_df_post_rej.to_csv(
+        path + "/" + "detrended_post_rejection.csv", index=False
+    )
 
     return detrend_df_post_rej
-
-

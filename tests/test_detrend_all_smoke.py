@@ -28,7 +28,7 @@ def test_detrend_all_runs_with_monkeypatch_and_writes_csv(fake_env, monkeypatch)
 
     Then we assert detrend_all():
     - returns a DataFrame with expected columns
-    - writes detrended.csv / orbital_data.csv / t0s.csv
+    - writes detrended_pre_rejection.csv / orbital_data.csv / t0s.csv
     - returns orbital info consistent with our stubs
     """
 
@@ -227,11 +227,13 @@ def test_detrend_all_runs_with_monkeypatch_and_writes_csv(fake_env, monkeypatch)
     assert np.all(np.isfinite(detrend_df["yerr"].to_numpy()))
 
     # --- Files written by detrend_all
-    detrended_path = os.path.join(str(fake_env), "detrended.csv")
+    detrended_path = os.path.join(str(fake_env), "detrended_pre_rejection.csv")
     orbital_path = os.path.join(str(fake_env), "orbital_data.csv")
     t0s_path = os.path.join(str(fake_env), "t0s.csv")
 
-    assert os.path.exists(detrended_path), "detrend_all() should write detrended.csv"
+    assert os.path.exists(detrended_path), (
+        "detrend_all() should write detrended_pre_rejection.csv"
+    )
     assert os.path.exists(orbital_path), "detrend_all() should write orbital_data.csv"
     assert os.path.exists(t0s_path), "detrend_all() should write t0s.csv"
 
@@ -239,11 +241,11 @@ def test_detrend_all_runs_with_monkeypatch_and_writes_csv(fake_env, monkeypatch)
     orbital_written = pd.read_csv(orbital_path)
     t0s_written = pd.read_csv(t0s_path)
 
-    # detrended.csv sanity
+    # detrended_pre_rejection.csv sanity
     assert len(detrended_written) == N
     for col in required_cols:
         assert col in detrended_written.columns, (
-            f"Column '{col}' should be present in detrended.csv"
+            f"Column '{col}' should be present in detrended_pre_rejection.csv"
         )
 
     # orbital_data.csv sanity

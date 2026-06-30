@@ -87,7 +87,7 @@ def detrend_all(
 
         
         # check if detrended lc already exist
-        detrendec_lc_saved = path + '/detrended.csv'
+        detrendec_lc_saved = path + '/detrended_pre_rejection.csv'
 
 
         if os.path.exists(detrendec_lc_saved) and input_transit_times is None:
@@ -297,7 +297,9 @@ def detrend_all(
 
             detrend_df = pd.DataFrame(detrend_dict)
 
-            detrend_df.to_csv(path + "/" + "detrended.csv", index=False)
+            detrend_df.to_csv(
+                path + "/" + "detrended_pre_rejection.csv", index=False
+            )
 
             # plot all detrended data
             plot_detrended_lc(
@@ -479,7 +481,9 @@ def detrend_all(
 
         detrend_df = pd.DataFrame(detrend_dict)
 
-        detrend_df.to_csv(path + "/" + "detrended.csv", index=False)
+        detrend_df.to_csv(
+            path + "/" + "detrended_pre_rejection.csv", index=False
+        )
 
         # plot all detrended data
         plot_detrended_lc(
@@ -659,7 +663,9 @@ def detrend_all(
 
         detrend_df = pd.DataFrame(detrend_dict)
 
-        detrend_df.to_csv(path + "/" + "detrended.csv", index=False)
+        detrend_df.to_csv(
+            path + "/" + "detrended_pre_rejection.csv", index=False
+        )
 
         # plot all detrended data
         plot_detrended_lc(

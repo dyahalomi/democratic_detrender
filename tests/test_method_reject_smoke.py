@@ -11,7 +11,7 @@ def fake_input_dir(tmp_path):
     """
     Create a temp directory that looks like an existing detrend_all() run output.
     We will create:
-    - detrended.csv
+    - detrended_pre_rejection.csv
     - orbital_data.csv
     - t0s.csv
     which method_reject() expects.
@@ -19,7 +19,7 @@ def fake_input_dir(tmp_path):
     target_dir = tmp_path / "target"
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    # --- Fake detrended.csv ---
+    # --- Fake detrended_pre_rejection.csv ---
     # multiple segments separated by gaps >5 in 'time'
     time_arr = np.array([0.0, 2.5, 5.0, 12.0, 14.5, 17.0])
     yerr_arr = np.linspace(0.01, 0.02, len(time_arr))
@@ -66,7 +66,7 @@ def fake_input_dir(tmp_path):
             "CoFiAM PDCSAP": cofiam_pdc,
         }
     )
-    detrended_df.to_csv(target_dir / "detrended.csv", index=False)
+    detrended_df.to_csv(target_dir / "detrended_pre_rejection.csv", index=False)
 
     # --- Fake orbital_data.csv ---
     # method_reject reads 'period' and 'duration', and then takes [0]
@@ -233,17 +233,16 @@ def test_method_reject_runs_with_monkeypatch(fake_input_dir, monkeypatch):
     #   method_rejection_figures/  (directory)
     #   individual_detrended_post_rejection.pdf
     #   method_marg_detrended_post_rejection.pdf
-    #   detrended_post_method_rejection.csv
+    #   detrended_post_rejection.csv
     #
     # We'll just assert on the CSV since it's simple and portable.
-    out_csv_path = os.path.join(str(fake_input_dir), "detrended_post_method_rejection.csv")
-    assert os.path.exists(out_csv_path), "detrended_post_method_rejection.csv should be written"
+    out_csv_path = os.path.join(str(fake_input_dir), "detrended_post_rejection.csv")
+    assert os.path.exists(out_csv_path), "detrended_post_rejection.csv should be written"
 
     out_csv_df = pd.read_csv(out_csv_path)
     for col in required_cols:
         assert col in out_csv_df.columns, (
-            f"Column '{col}' should appear in detrended_post_method_rejection.csv"
+            f"Column '{col}' should appear in detrended_post_rejection.csv"
         )
     assert np.all(np.isfinite(out_csv_df["method marginalized"].to_numpy()))
     assert np.all(np.isfinite(out_csv_df["yerr"].to_numpy()))
-
