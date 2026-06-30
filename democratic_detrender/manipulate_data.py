@@ -30,12 +30,16 @@ def split_around_problems(x, y, yerr, mask, mask_fitted_planet, problem_times):
         a_mask_fitted_planet = mask_fitted_planet[ii]
 
         if time in split_times:
-
-            problem_split_x.append(np.array(split_x))
-            problem_split_y.append(np.array(split_y))
-            problem_split_yerr.append(np.array(split_yerr))
-            problem_split_mask.append(np.array(split_mask))
-            problem_split_mask_fitted_planet.append(np.array(split_mask_fitted_planet))
+            # Multiple requested boundaries can map to the same nearest cadence.
+            # Do not emit empty segments in that case.
+            if split_x:
+                problem_split_x.append(np.array(split_x))
+                problem_split_y.append(np.array(split_y))
+                problem_split_yerr.append(np.array(split_yerr))
+                problem_split_mask.append(np.array(split_mask))
+                problem_split_mask_fitted_planet.append(
+                    np.array(split_mask_fitted_planet)
+                )
 
             split_x = []
             split_y = []
@@ -49,6 +53,17 @@ def split_around_problems(x, y, yerr, mask, mask_fitted_planet, problem_times):
             split_yerr.append(flux_err)
             split_mask.append(a_mask)
             split_mask_fitted_planet.append(a_mask_fitted_planet)
+
+    # Preserve data after the final boundary when it does not coincide with the
+    # final cadence in the light curve.
+    if split_x:
+        problem_split_x.append(np.array(split_x))
+        problem_split_y.append(np.array(split_y))
+        problem_split_yerr.append(np.array(split_yerr))
+        problem_split_mask.append(np.array(split_mask))
+        problem_split_mask_fitted_planet.append(
+            np.array(split_mask_fitted_planet)
+        )
 
     output = [
         np.array(problem_split_x, dtype=object),

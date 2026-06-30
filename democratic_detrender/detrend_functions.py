@@ -10,6 +10,38 @@ from democratic_detrender.manipulate_data import split_around_transits
 from democratic_detrender.outlier_rejection import reject_outliers_everywhere
 from democratic_detrender.helper_functions import find_nearest
 
+
+def _process_detrended_outliers(
+    x,
+    detrended,
+    yerr,
+    t0s,
+    period,
+    duration,
+    cadence,
+    output_path,
+    reject_outliers,
+):
+    """Optionally reject and plot outliers in a detrended light curve."""
+    if not reject_outliers:
+        return np.asarray(x).copy(), np.asarray(detrended).copy()
+
+    x_no_outliers, detrended_no_outliers = reject_outliers_everywhere(
+        x, detrended, yerr, 5 * cadence, 5, 10
+    )
+    plot_individual_outliers(
+        x,
+        detrended,
+        x_no_outliers,
+        detrended_no_outliers,
+        t0s,
+        period,
+        float(6 * duration / (24.0)) / period,
+        0.009,
+        output_path,
+    )
+    return x_no_outliers, detrended_no_outliers
+
 def trim_jump_times(x, y, yerr, mask, mask_fitted_planet, t0s, period, jump_times):
     """
     Trim light curve around the labeled jump (ie. problem) times in time series data.
@@ -160,6 +192,7 @@ def detrend_variable_methods(
     save_to_directory,
     show_plots,
     detrend_methods,
+    reject_outliers=True,
 ):
 
     """
@@ -179,6 +212,8 @@ def detrend_variable_methods(
 	    save_to_directory (str): Directory path to save plots.
 	    show_plots (bool): Whether to display plots.
 	    detrend_methods (list): List of detrending methods to apply.
+	    reject_outliers (bool): Whether to reject outliers before and after
+	        detrending. Defaults to True.
 
 	Returns:
 	    Tuple containing detrending methods used and output arrays:
@@ -280,21 +315,16 @@ def detrend_variable_methods(
             period,
         )
 
-        # remove outliers in unmasked local detrended lc
-        local_x_no_outliers, local_detrended_no_outliers = reject_outliers_everywhere(
-            local_x, local_detrended, local_yerr, 5 * cadence, 5, 10
-        )
-
-        plot_individual_outliers(
+        local_x_no_outliers, local_detrended_no_outliers = _process_detrended_outliers(
             local_x,
             local_detrended,
-            local_x_no_outliers,
-            local_detrended_no_outliers,
+            local_yerr,
             t0s,
             period,
-            float(6 * duration / (24.0)) / period,
-            0.009,
+            duration,
+            cadence,
             save_to_directory + "local_outliers.pdf",
+            reject_outliers,
         )
 
         end = time.time()
@@ -330,21 +360,16 @@ def detrend_variable_methods(
             local_x_epochs,
         )
 
-        # remove outliers in unmasked poly detrended lc
-        poly_x_no_outliers, poly_detrended_no_outliers = reject_outliers_everywhere(
-            local_x, poly_detrended, local_yerr, 5 * cadence, 5, 10
-        )
-
-        plot_individual_outliers(
+        poly_x_no_outliers, poly_detrended_no_outliers = _process_detrended_outliers(
             local_x,
             poly_detrended,
-            poly_x_no_outliers,
-            poly_detrended_no_outliers,
+            local_yerr,
             t0s,
             period,
-            float(6 * duration / (24.0)) / period,
-            0.009,
+            duration,
+            cadence,
             save_to_directory + "polyAM_outliers.pdf",
+            reject_outliers,
         )
 
         end = time.time()
@@ -379,21 +404,16 @@ def detrend_variable_methods(
             period,
         )
 
-        # remove outliers in unmasked gp detrended lc
-        gp_x_no_outliers, gp_detrended_no_outliers = reject_outliers_everywhere(
-            local_x, gp_detrended, local_yerr, 5 * cadence, 5, 10
-        )
-
-        plot_individual_outliers(
+        gp_x_no_outliers, gp_detrended_no_outliers = _process_detrended_outliers(
             local_x,
             gp_detrended,
-            gp_x_no_outliers,
-            gp_detrended_no_outliers,
+            local_yerr,
             t0s,
             period,
-            float(6 * duration / (24.0)) / period,
-            0.009,
+            duration,
+            cadence,
             save_to_directory + "GP_outliers.pdf",
+            reject_outliers,
         )
 
         end = time.time()
@@ -427,21 +447,16 @@ def detrend_variable_methods(
             local_x_epochs,
         )
 
-        # remove outliers in unmasked CoFiAM detrended lc
-        cofiam_x_no_outliers, cofiam_detrended_no_outliers = reject_outliers_everywhere(
-            local_x, cofiam_detrended, local_yerr, 5 * cadence, 5, 10
-        )
-
-        plot_individual_outliers(
+        cofiam_x_no_outliers, cofiam_detrended_no_outliers = _process_detrended_outliers(
             local_x,
             cofiam_detrended,
-            cofiam_x_no_outliers,
-            cofiam_detrended_no_outliers,
+            local_yerr,
             t0s,
             period,
-            float(6 * duration / (24.0)) / period,
-            0.009,
+            duration,
+            cadence,
             save_to_directory + "CoFiAM_outliers.pdf",
+            reject_outliers,
         )
 
         end = time.time()
@@ -500,7 +515,8 @@ def detrend_variable_methods(
 
 
 def detrend_sap_and_pdc(
-    sap_values, pdc_values, save_dir, pop_out_plots, detrend_methods
+    sap_values, pdc_values, save_dir, pop_out_plots, detrend_methods,
+    reject_outliers=True,
 ):
 
     # assumes order of sap, pdc arrays are as follows:
@@ -522,6 +538,7 @@ def detrend_sap_and_pdc(
         save_to_directory=save_dir + "sap_",
         show_plots=pop_out_plots,
         detrend_methods=detrend_methods,
+        reject_outliers=reject_outliers,
     )
 
     pdc_detrend_methods_out, detrended_pdc_vals = detrend_variable_methods(
@@ -538,6 +555,7 @@ def detrend_sap_and_pdc(
         save_to_directory=save_dir + "pdc_",
         show_plots=pop_out_plots,
         detrend_methods=detrend_methods,
+        reject_outliers=reject_outliers,
     )
 
     return (
@@ -548,7 +566,9 @@ def detrend_sap_and_pdc(
     )
 
 
-def detrend_one_lc(lc_values, save_dir, pop_out_plots, detrend_methods):
+def detrend_one_lc(
+    lc_values, save_dir, pop_out_plots, detrend_methods, reject_outliers=True
+):
 
     # assumes order of sap, pdc arrays are as follows:
     # [pdc_x_epochs, pdc_y_epochs, pdc_yerr_epochs, pdc_mask_epochs, \
@@ -570,6 +590,7 @@ def detrend_one_lc(lc_values, save_dir, pop_out_plots, detrend_methods):
         save_to_directory=save_dir,
         show_plots=pop_out_plots,
         detrend_methods=detrend_methods,
+        reject_outliers=reject_outliers,
     )
 
     return detrend_methods_out, detrended_lc_vals

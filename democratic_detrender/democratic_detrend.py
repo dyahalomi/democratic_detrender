@@ -14,7 +14,8 @@ def democratic_detrend(input_id, mission, flux_type='both', input_planet_number=
     input_depth=0.01, input_period=None, input_t0=None, input_duration=None, input_mask_width=1.1, 
     input_show_plots=False, input_dont_bin=False, input_use_sap_problem_times=False, 
     input_no_pdc_problem_times=True, input_user_light_curve=None,
-    input_polyAM=True, input_CoFiAM=True, input_GP=True, input_local=True):
+    input_polyAM=True, input_CoFiAM=True, input_GP=True, input_local=True,
+    input_transit_times=None, input_reject_outliers=True):
     
     
     # determine the path to directory to load and save files
@@ -58,6 +59,8 @@ def democratic_detrend(input_id, mission, flux_type='both', input_planet_number=
     input_use_sap_problem_times=input_use_sap_problem_times,
     input_no_pdc_problem_times=input_no_pdc_problem_times,
     input_user_light_curve=input_user_light_curve,
+    input_transit_times=input_transit_times,
+    input_reject_outliers=input_reject_outliers,
     input_polyAM=input_polyAM,
     input_CoFiAM=input_CoFiAM,
     input_GP=input_GP,
@@ -71,6 +74,3 @@ def democratic_detrend(input_id, mission, flux_type='both', input_planet_number=
 
 
     return detrend_df_post_rej
-
-
-

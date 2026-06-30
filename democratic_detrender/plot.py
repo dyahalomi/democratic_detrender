@@ -437,6 +437,12 @@ def plot_outliers(
 def plot_split_data(x_split, y_split, t0s, figname, object_id):
 
     plt.close("all")
+    non_empty = [ii for ii, values in enumerate(x_split) if len(values) > 0]
+    if not non_empty:
+        return None
+
+    x_split = [x_split[ii] for ii in non_empty]
+    y_split = [y_split[ii] for ii in non_empty]
     fig, ax = plt.subplots(nrows=len(x_split), figsize=[18, 3 * len(x_split)])
 
     if len(x_split) > 1:

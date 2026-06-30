@@ -1,11 +1,67 @@
 """ This module contains functions to obtain light curve data and transit information from the NASA Exoplanet Archive. """
 
+from collections.abc import Mapping
+
 import numpy as np
 import pandas as pd
 
 from democratic_detrender.helper_functions import determine_cadence, find_nearest
 
 import lightkurve as lk
+
+
+def _normalize_transit_times(user_transit_times, planet_number, nplanets):
+    """Return user-supplied transit centers as a 1-based planet mapping."""
+    if user_transit_times is None:
+        return {}
+
+    if isinstance(user_transit_times, Mapping):
+        transit_times_by_planet = dict(user_transit_times)
+        if not transit_times_by_planet:
+            raise ValueError("user_transit_times cannot be empty")
+    else:
+        values = list(user_transit_times)
+        if not values:
+            raise ValueError("user_transit_times cannot be empty")
+
+        # A flat sequence applies to the planet being fitted. A nested sequence
+        # is aligned with the archive's 1-based planet ordering.
+        if all(np.isscalar(value) for value in values):
+            transit_times_by_planet = {planet_number: values}
+        else:
+            transit_times_by_planet = {
+                index + 1: transit_times for index, transit_times in enumerate(values)
+            }
+
+    normalized = {}
+    for planet, transit_times in transit_times_by_planet.items():
+        if isinstance(planet, bool) or not isinstance(planet, (int, np.integer)):
+            raise ValueError("user_transit_times keys must be integer planet numbers")
+        if planet < 1 or planet > nplanets:
+            raise ValueError(
+                f"planet {planet} is outside the available range 1..{nplanets}"
+            )
+
+        times = np.asarray(transit_times, dtype=float)
+        if times.ndim != 1 or times.size == 0:
+            raise ValueError(
+                f"transit times for planet {planet} must be a non-empty 1D sequence"
+            )
+        if not np.all(np.isfinite(times)):
+            raise ValueError(f"transit times for planet {planet} must all be finite")
+
+        normalized[int(planet)] = np.sort(times)
+
+    return normalized
+
+
+def _mask_from_transit_times(times, transit_times, duration_days):
+    """Create a boolean mask centered on individually supplied transit times."""
+    mask = np.zeros(len(times), dtype=bool)
+    half_width = duration_days / 2.0
+    for transit_time in transit_times:
+        mask |= np.abs(times - transit_time) <= half_width
+    return mask
 
 
 def tic_id_from_simbad(other_id):
@@ -230,7 +286,8 @@ def get_light_curve(
     user_duration=None,
     planet_number=1,
     mask_width=1.3,
-    remove_PDCSAP_blend=True
+    remove_PDCSAP_blend=True,
+    user_transit_times=None,
 ):
     """
     Obtains light curve data based on the object ID, flux type, and optional user-provided transit parameters.
@@ -246,6 +303,11 @@ def get_light_curve(
         planet_number (int, optional): Number of the planet in the system. Defaults to 1.
         mask_width (float, optional): Width multiplier for creating transit masks. Defaults to 1.3.
         remove_PDCSAP_blend (bool, optional). Whether to remove the assumed blend factor from PDCSAP data. Defaults to True.
+        user_transit_times (mapping or sequence, optional): Individually measured
+            transit centers in BJD. A mapping uses 1-based planet numbers as
+            keys; a flat sequence applies to ``planet_number``; and a nested
+            sequence follows the archive planet order. Planets not included use
+            the periodic ephemeris. Defaults to None.
 
     Returns:
         tuple: A tuple containing the light curve data:
@@ -272,16 +334,29 @@ def get_light_curve(
     # if transit_info is a string then we just returned tic id bc no planet info found
     if isinstance(transit_info, str):
 
-        if user_period == None or user_t0 == None or user_duration == None:
+        if (
+            user_period is None
+            or user_duration is None
+            or (user_t0 is None and user_transit_times is None)
+        ):
             print(
-                "no transit info found, so you must enter all 3 of period, t0, and duration"
+                "no transit info found, so you must enter period, duration, "
+                "and either t0 or user_transit_times"
             )
             return None
 
         else:
+            if user_t0 is None:
+                supplied_times = _normalize_transit_times(
+                    user_transit_times, planet_number, nplanets=1
+                )
+                reference_t0 = supplied_times[planet_number][0]
+            else:
+                reference_t0 = user_t0
+
             transit_dic = {
                 "tic_id": [transit_info],
-                "t0 [BJD]": [float(user_t0)],
+                "t0 [BJD]": [float(reference_t0)],
                 "period [days]": [float(user_period)],
                 "duration [hours]": [float(user_duration)],
             }
@@ -338,10 +413,19 @@ def get_light_curve(
     print("")
 
     nplanets = len(periods)
+    if planet_number < 1 or planet_number > nplanets:
+        raise ValueError(f"planet_number must be between 1 and {nplanets}")
+    transit_times_by_planet = _normalize_transit_times(
+        user_transit_times, planet_number, nplanets
+    )
 
     if TESS:
         # switch to TESS BJD
         t0s = t0s - 2457000
+        transit_times_by_planet = {
+            planet: times - 2457000
+            for planet, times in transit_times_by_planet.items()
+        }
 
         if flux_type == "qlp":
             lc_files = lk.search_lightcurve(
@@ -368,6 +452,10 @@ def get_light_curve(
     if Kepler:
         # switch to Kepler BJD
         t0s = t0s - 2454833
+        transit_times_by_planet = {
+            planet: times - 2454833
+            for planet, times in transit_times_by_planet.items()
+        }
 
         # pull in Kepler LC
         # CURRENTLY ONLY LOADS LONG CADENCE DATA BY DEFAULT
@@ -467,27 +555,39 @@ def get_light_curve(
         ys_err = lc.flux_err
 
 
-    #define lc_mask for mask determination 
-    lc_mask = lc_files.stitch().remove_nans() 
+    # Define masks for all planets. Explicit transit centers take precedence
+    # for the planets supplied by the user; the remaining planets retain the
+    # periodic Lightkurve mask behavior.
+    lc_mask = lc_files.stitch().remove_nans()
     mask = np.zeros(np.shape(xs), dtype=bool)
+    planet_masks = {}
     for ii in range(0, nplanets):
-        masks = lc_mask.create_transit_mask(
-            period=periods[ii],
-            duration=durations[ii] / 24.0 * mask_width,
-            transit_time=t0s[ii],
-        )
-        mask += masks
+        current_planet = ii + 1
+        duration_days = durations[ii] / 24.0 * mask_width
+        if current_planet in transit_times_by_planet:
+            planet_mask = _mask_from_transit_times(
+                xs, transit_times_by_planet[current_planet], duration_days
+            )
+        else:
+            planet_mask = np.asarray(
+                lc_mask.create_transit_mask(
+                    period=periods[ii],
+                    duration=duration_days,
+                    transit_time=t0s[ii],
+                ),
+                dtype=bool,
+            )
+        planet_masks[current_planet] = planet_mask
+        mask |= planet_mask
 
-    mask_fitted_planet = lc_mask.create_transit_mask(
-        period=periods[planet_number - 1],
-        duration=durations[planet_number - 1] / 24.0 * mask_width,
-        transit_time=t0s[planet_number - 1],
-    )
+    mask_fitted_planet = planet_masks[planet_number].copy()
 
     # save the period, duration, and t0 for the planet we are fitting for...
     period = np.array([periods[planet_number - 1]])
     t0 = t0s[planet_number - 1]
     duration = np.array([durations[planet_number - 1]])
+    if planet_number in transit_times_by_planet:
+        t0 = transit_times_by_planet[planet_number][0]
 
     nan_values = []
     if np.isnan(period[0]):
@@ -524,18 +624,23 @@ def get_light_curve(
 
     min_time = xs.min()
     max_time = xs.max()
-    t0s_all = []
-    while t0 > min_time:
-        t0 -= period[0]
+    if planet_number in transit_times_by_planet:
+        t0s_all = transit_times_by_planet[planet_number]
+    else:
+        t0s_all = []
+        while t0 > min_time:
+            t0 -= period[0]
 
-    while t0 < max_time:
-        t0s_all.append(t0)
-        t0 += period[0]
+        while t0 < max_time:
+            t0s_all.append(t0)
+            t0 += period[0]
 
     cadence = determine_cadence(xs)
 
     t0s_in_data = []
     for t0 in t0s_all:
+        if t0 < min_time or t0 > max_time:
+            continue
         nearest_lc_time = find_nearest(xs, t0)
 
         # if there is a data point within the cadence (times some uncertainty lets say 3) of

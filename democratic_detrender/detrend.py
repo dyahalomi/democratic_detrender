@@ -18,7 +18,8 @@ def detrend_all(
     input_depth=0.01, input_period=None, input_t0=None, input_duration=None, input_mask_width=1.1, 
     input_show_plots=False, input_dont_bin=False, input_use_sap_problem_times=False, 
     input_no_pdc_problem_times=True, input_user_light_curve=None, ensemble_statistic = "median",
-    input_polyAM=True, input_CoFiAM=True, input_GP=True, input_local=True):
+    input_polyAM=True, input_CoFiAM=True, input_GP=True, input_local=True,
+    input_transit_times=None, input_reject_outliers=True):
 
 
     # which detrending methods will we use?
@@ -89,7 +90,7 @@ def detrend_all(
         detrendec_lc_saved = path + '/detrended.csv'
 
 
-        if os.path.exists(detrendec_lc_saved):
+        if os.path.exists(detrendec_lc_saved) and input_transit_times is None:
             print('detrended lc for '+input_id+' planet number '+str(input_planet_number)+' found')
             detrend_df = pd.read_csv(detrendec_lc_saved)
             x_detrended = detrend_df['time']
@@ -102,7 +103,16 @@ def detrend_all(
 
             #this just pulls in period and duration from exofop for plotting purposes
             _, _, _, _, _, pdc_t0s, pdc_period, pdc_duration, _, _, _ = \
-            get_light_curve(input_id, 'pdcsap_flux', planet_number = input_planet_number, TESS=tess_bool, Kepler=kepler_bool)
+            get_light_curve(
+                input_id,
+                'pdcsap_flux',
+                planet_number=input_planet_number,
+                TESS=tess_bool,
+                Kepler=kepler_bool,
+                user_period=input_period,
+                user_t0=input_t0,
+                user_duration=input_duration,
+            )
 
         else:
             #pulls in light curve
@@ -145,7 +155,9 @@ def detrend_all(
                 dont_bin=input_dont_bin,
                 problem_times_default=input_problem_times_default,
                 no_pdc_problem_times=input_no_pdc_problem_times,
-                user_light_curve=input_user_light_curve
+                user_light_curve=input_user_light_curve,
+                user_transit_times=input_transit_times,
+                reject_outliers=input_reject_outliers,
             )
 
             # now for detrending!
@@ -183,6 +195,7 @@ def detrend_all(
                 save_dir=path + "/",
                 pop_out_plots=input_show_plots,
                 detrend_methods=input_detrend_methods,
+                reject_outliers=input_reject_outliers,
             )
 
             sap_detrend_methods_out = detrended_lc_all_vals[0]
@@ -360,7 +373,9 @@ def detrend_all(
             no_pdc_problem_times=input_no_pdc_problem_times,
             dont_bin=input_dont_bin,
             problem_times_default=input_problem_times_default,
-            user_light_curve=input_user_light_curve
+            user_light_curve=input_user_light_curve,
+            user_transit_times=input_transit_times,
+            reject_outliers=input_reject_outliers,
         )
 
         # now for detrending!
@@ -386,6 +401,7 @@ def detrend_all(
             save_dir=path + "/",
             pop_out_plots=input_show_plots,
             detrend_methods=input_detrend_methods,
+            reject_outliers=input_reject_outliers,
         )
 
         [
@@ -537,7 +553,9 @@ def detrend_all(
             user_durations=input_duration,
             mask_width=input_mask_width,
             dont_bin=input_dont_bin,
-            user_light_curve=input_user_light_curve
+            user_light_curve=input_user_light_curve,
+            user_transit_times=input_transit_times,
+            reject_outliers=input_reject_outliers,
         )
 
         # now for detrending!
@@ -563,6 +581,7 @@ def detrend_all(
             save_dir=path + "/",
             pop_out_plots=input_show_plots,
             detrend_methods=input_detrend_methods,
+            reject_outliers=input_reject_outliers,
         )
 
         [

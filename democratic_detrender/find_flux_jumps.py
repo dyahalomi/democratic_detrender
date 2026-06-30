@@ -30,7 +30,9 @@ def find_flux_jumps(
     data_name=None,
     problem_times_default=None,
     user_light_curve=None,
-    remove_PDCSAP_blend=True
+    remove_PDCSAP_blend=True,
+    user_transit_times=None,
+    reject_outliers=True,
 ):
 
     """
@@ -55,6 +57,11 @@ def find_flux_jumps(
         problem_times_default (str, optional): Default problem times source.
         user_light_curve (string, optional): path to folder with user light curve. Default: NO.
         remove_PDCSAP_blend (bool, optional). Whether to remove the assumed blend factor from PDCSAP data. Defaults to True.
+        user_transit_times (mapping or sequence, optional): Individually
+            measured BJD transit centers, optionally grouped by 1-based planet
+            number. Defaults to None.
+        reject_outliers (bool, optional): Whether to run moving-median outlier
+            rejection before splitting the light curve. Defaults to True.
 
 
     Returns:
@@ -96,7 +103,8 @@ def find_flux_jumps(
             user_durations,
             planet_number,
             mask_width,
-            remove_PDCSAP_blend
+            remove_PDCSAP_blend,
+            user_transit_times,
         )
 
     else:
@@ -127,29 +135,39 @@ def find_flux_jumps(
     # find end time of quarters
     quarters_end = [el[1] for el in quarters]
 
-    (
-        time_out,
-        flux_out,
-        flux_err_out,
-        mask_out,
-        mask_fitted_planet_out,
-        moving_median,
-    ) = reject_outliers_out_of_transit(
-        time, lc, lc_err, mask, mask_fitted_planet, 30 * cadence, 4
-    )
+    if reject_outliers:
+        (
+            time_out,
+            flux_out,
+            flux_err_out,
+            mask_out,
+            mask_fitted_planet_out,
+            moving_median,
+        ) = reject_outliers_out_of_transit(
+            time, lc, lc_err, mask, mask_fitted_planet, 30 * cadence, 4
+        )
 
-    plot_outliers(
-        time,
-        lc,
-        time_out,
-        flux_out,
-        moving_median,
-        quarters_end,
-        save_to_directory + flux_type + "_" + "outliers.pdf",
-        star_id,
-    )
-    if show_plots:
-        plt.show()
+        plot_outliers(
+            time,
+            lc,
+            time_out,
+            flux_out,
+            moving_median,
+            quarters_end,
+            save_to_directory + flux_type + "_" + "outliers.pdf",
+            star_id,
+        )
+        if show_plots:
+            plt.show()
+    else:
+        print("skipping outlier rejection")
+        time_out = np.asarray(time).copy()
+        flux_out = np.asarray(lc).copy()
+        flux_err_out = np.asarray(lc_err).copy()
+        mask_out = np.asarray(mask, dtype=bool).copy()
+        mask_fitted_planet_out = np.asarray(
+            mask_fitted_planet, dtype=bool
+        ).copy()
 
     (
         x_quarters,
@@ -322,7 +340,9 @@ def find_sap_and_pdc_flux_jumps(
     data_name=None,
     problem_times_default=None,
     no_pdc_problem_times=True,
-    user_light_curve=None
+    user_light_curve=None,
+    user_transit_times=None,
+    reject_outliers=True,
 ):
 
     """
@@ -344,6 +364,11 @@ def find_sap_and_pdc_flux_jumps(
         problem_times_default (str, optional): Default problem times source.
         no_pdc_problem_times (bool, optional, default=True): Flag indicating whether PDC flux has no problem times.
         user_light_curve (string, optional): path to folder with user light curve. Default: NO.
+        user_transit_times (mapping or sequence, optional): Individually
+            measured BJD transit centers, optionally grouped by 1-based planet
+            number. Defaults to None.
+        reject_outliers (bool, optional): Whether to run moving-median outlier
+            rejection before splitting each light curve. Defaults to True.
 
 
     Returns:
@@ -378,7 +403,9 @@ def find_sap_and_pdc_flux_jumps(
         data_name=data_name,
         problem_times_default=problem_times_default,
         no_pdc_problem_times=no_pdc_problem_times,
-        user_light_curve=user_light_curve
+        user_light_curve=user_light_curve,
+        user_transit_times=user_transit_times,
+        reject_outliers=reject_outliers,
     )
 
     pdc_vals = find_flux_jumps(
@@ -397,7 +424,9 @@ def find_sap_and_pdc_flux_jumps(
         data_name=data_name,
         problem_times_default=problem_times_default,
         no_pdc_problem_times=no_pdc_problem_times,
-        user_light_curve=user_light_curve
+        user_light_curve=user_light_curve,
+        user_transit_times=user_transit_times,
+        reject_outliers=reject_outliers,
     )
 
     return sap_vals, pdc_vals

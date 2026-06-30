@@ -4,6 +4,7 @@ import numpy as np
 # we assume your package directory is named "democratic_detrender"
 # and lives next to the "tests" folder.
 from democratic_detrender import helper_functions as hf
+from democratic_detrender.manipulate_data import split_around_problems
 
 
 def test_durbin_watson_basic():
@@ -102,3 +103,33 @@ def test_ensemble_step_output_shapes_and_no_crash():
         raise AssertionError(
             "ensemble_step should raise ValueError if method is not 'median' or 'mean'"
         )
+
+
+def test_split_around_problems_does_not_return_empty_segments():
+    x = np.arange(5.0)
+    y = x.copy()
+    yerr = np.ones(5)
+    mask = np.zeros(5, dtype=bool)
+
+    result = split_around_problems(
+        x, y, yerr, mask, mask, problem_times=[0.0, 2.0, 4.0]
+    )
+
+    assert all(len(segment) > 0 for segment in result[0])
+    assert [segment.tolist() for segment in result[0]] == [[1.0], [3.0]]
+
+
+def test_split_around_problems_preserves_trailing_data():
+    x = np.arange(5.0)
+    y = x.copy()
+    yerr = np.ones(5)
+    mask = np.zeros(5, dtype=bool)
+
+    result = split_around_problems(
+        x, y, yerr, mask, mask, problem_times=[2.0]
+    )
+
+    assert [segment.tolist() for segment in result[0]] == [
+        [0.0, 1.0],
+        [3.0, 4.0],
+    ]

@@ -37,6 +37,7 @@ def test_detrend_all_runs_with_monkeypatch_and_writes_csv(fake_env, monkeypatch)
     fake_flux = np.linspace(0.0, 0.02, N)
     fake_yerr = np.full(N, 0.01)
     fake_mask = np.zeros(N, dtype=bool)
+    received_options = {}
 
     # --- stub find_flux_jumps
     def _fake_find_flux_jumps(*args, **kwargs):
@@ -47,6 +48,7 @@ def test_detrend_all_runs_with_monkeypatch_and_writes_csv(fake_env, monkeypatch)
         We return scalars for period/duration/etc so the math in detrend_all
         (for plotting) doesn't blow up.
         """
+        received_options["find_flux_jumps"] = kwargs["reject_outliers"]
         x_epochs = [fake_time]
         y_epochs = [fake_flux]
         yerr_epochs = [fake_yerr]
@@ -86,6 +88,7 @@ def test_detrend_all_runs_with_monkeypatch_and_writes_csv(fake_env, monkeypatch)
 
         pdc_block must have exactly 17 items in a specific order.
         """
+        received_options["detrend_one_lc"] = kwargs["reject_outliers"]
         local_det = fake_flux - 0.001
         poly_det = fake_flux - 0.002
         gp_det = fake_flux - 0.003
@@ -188,6 +191,7 @@ def test_detrend_all_runs_with_monkeypatch_and_writes_csv(fake_env, monkeypatch)
         input_CoFiAM=True,
         input_GP=True,
         input_local=True,
+        input_reject_outliers=False,
     )
 
     # --- Assertions on return values
@@ -213,6 +217,10 @@ def test_detrend_all_runs_with_monkeypatch_and_writes_csv(fake_env, monkeypatch)
     assert np.isclose(t0s_out, 1.5)
     assert np.isclose(period_out, 5.0)
     assert np.isclose(duration_out, 2.0)
+    assert received_options == {
+        "find_flux_jumps": False,
+        "detrend_one_lc": False,
+    }
 
     # The combined curve and the propagated uncertainties should both be finite
     assert np.all(np.isfinite(detrend_df["method marginalized"].to_numpy()))
@@ -247,4 +255,3 @@ def test_detrend_all_runs_with_monkeypatch_and_writes_csv(fake_env, monkeypatch)
     # t0s.csv sanity
     assert "t0s_in_data" in t0s_written.columns
     assert np.isclose(t0s_written["t0s_in_data"].to_numpy()[0], 1.5)
-
