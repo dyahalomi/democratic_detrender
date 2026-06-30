@@ -37,58 +37,28 @@ def method_reject(path, input_depth=0.01, input_period=None, input_duration=None
     print("detrending methods used:", detrending_methods)
 
 
-    # Initialize sublists
+    # Previous: >-5-day time gaps, splitted chunks but sometimes short period planets can have many transits per chunk
+    # transit per data chunk when transits are >5 days apart (long-period planets)
+    # cutting chunk based on midpoint of transit midtimes
+
+    t0s_arr = np.sort(np.array(t0s, dtype=float))
+    times_all = df['time'].to_numpy(dtype=float)
+    edges = (t0s_arr[:-1] + t0s_arr[1:]) / 2.0       # midpoints = chunk boundaries
+    nearest = np.searchsorted(edges, times_all)      # nearest-transit index  (no N x M array for memory saving)
+
     time_epochs = []
     y_epochs = []
     yerr_epochs = []
-
-    # Temporary variables to hold data for current sublist
-    time_temp = []
-    y_temp = []
-    yerr_temp = []
-
-    # Iterate over the DataFrame rows
-    for index, row in df.iterrows():
-        if len(time_temp) == 0:  # If it's the first data point
-            # Check if all values in the specified columns are not NaN for the current row
-            #if row[['local SAP', 'local PDCSAP', 
-            #        'polyAM SAP', 'polyAM PDCSAP', 
-            #        'GP SAP', 'GP PDCSAP', 
-            #        'CoFiAM SAP', 'CoFiAM PDCSAP']].notna().all():
-                
-            time_temp.append(row['time'])
-            y_temp.append(row[detrending_methods])
-            yerr_temp.append(row['yerr'])
-        else:
-            time_diff = row['time'] - time_temp[-1]
-            if time_diff > 5:  # If there is a gap greater than 5 in time
-                # Check if all values in the specified columns are not NaN for the current row
-                #if row[['local SAP', 'local PDCSAP', 
-                #        'polyAM SAP', 'polyAM PDCSAP', 
-                #        'GP SAP', 'GP PDCSAP', 
-                #        'CoFiAM SAP', 'CoFiAM PDCSAP']].notna().all():
-                # Append current sublist to the main list
-                time_epochs.append(time_temp)
-                y_epochs.append(pd.DataFrame(y_temp))
-                yerr_epochs.append(yerr_temp)
-                # Reset temporary variables for the new sublist
-                time_temp = [row['time']]
-                y_temp = [row[detrending_methods]]
-                yerr_temp = [row['yerr']]
-            else:
-                # Check if all values in the specified columns are not NaN for the current row
-                #if row[['local SAP', 'local PDCSAP', 
-                #        'polyAM SAP', 'polyAM PDCSAP', 
-                #        'GP SAP', 'GP PDCSAP', 
-                #        'CoFiAM SAP', 'CoFiAM PDCSAP']].notna().all():
-                time_temp.append(row['time'])
-                y_temp.append(row[detrending_methods])
-                yerr_temp.append(row['yerr'])
-
-    # Append the last sublist
-    time_epochs.append(time_temp)
-    y_epochs.append(pd.DataFrame(y_temp))
-    yerr_epochs.append(yerr_temp)
+    t0s_used = []                                    # transit midtimes kept aligned to the epochs
+    for k in range(len(t0s_arr)):
+        sel = np.where(nearest == k)[0]
+        if len(sel) == 0:                           
+            continue
+        time_epochs.append(list(times_all[sel]))
+        y_epochs.append(df[detrending_methods].iloc[sel].reset_index(drop=True))
+        yerr_epochs.append(list(df['yerr'].to_numpy()[sel]))
+        t0s_used.append(t0s_arr[k])
+    pd.DataFrame({'t0s_used': t0s_used}).to_csv(path + '/final_t0s.csv', index=False)
 
     period = period[0]
     duration=input_mask_width*duration[0]/24.
@@ -99,12 +69,12 @@ def method_reject(path, input_depth=0.01, input_period=None, input_duration=None
     os.makedirs(method_reject_figpath, exist_ok=True)
 
     # DW method rejection test
-    dw_sigma_test, DWMC_epochs, DWdetrend_epochs, DWupper_bound_epochs = reject_via_DW(time_epochs, y_epochs, yerr_epochs, t0s, period, duration, niter=100000)
+    dw_sigma_test, DWMC_epochs, DWdetrend_epochs, DWupper_bound_epochs = reject_via_DW(time_epochs, y_epochs, yerr_epochs, t0s_used, period, duration, niter=100000)
     dw_rejection_plots(DWMC_epochs, DWdetrend_epochs, DWupper_bound_epochs, detrending_methods, method_reject_figpath)
 
 
     # binning vs. RMS method rejection test
-    binning_sigma_test, beta_MC_epochs, beta_detrended_epochs, binning_upper_bound_epochs = reject_via_binning(time_epochs, y_epochs, yerr_epochs, t0s, period, duration, niter=100000)
+    binning_sigma_test, beta_MC_epochs, beta_detrended_epochs, binning_upper_bound_epochs = reject_via_binning(time_epochs, y_epochs, yerr_epochs, t0s_used, period, duration, niter=100000)
     binning_rejection_plots(beta_MC_epochs, beta_detrended_epochs, binning_upper_bound_epochs, detrending_methods, method_reject_figpath)
 
 
@@ -130,7 +100,7 @@ def method_reject(path, input_depth=0.01, input_period=None, input_duration=None
     # plot all detrended data
     # mask width already inflated in method rejection step so mask_width=1
     plot_detrended_lc(times_all_post_rej, y_all_post_rej, detrending_methods,
-                      t0s, float(6*duration)/period/input_mask_width, period,
+                      t0s_used, float(6*duration)/period/input_mask_width, period,
                       colors, duration*24., depth=input_depth, mask_width=1,
                       figname = path+'/individual_detrended_post_rejection.pdf')
 
@@ -140,7 +110,7 @@ def method_reject(path, input_depth=0.01, input_period=None, input_duration=None
         times_all_post_rej,
         [detrend_df_post_rej["method marginalized"]],
         ["method marg"],
-        t0s,
+        t0s_used,
         float(6*duration)/period/input_mask_width, 
         period,
         ["k"], 
