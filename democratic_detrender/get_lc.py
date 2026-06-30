@@ -64,19 +64,6 @@ def _mask_from_transit_times(times, transit_times, duration_days):
     return mask
 
 
-def _sort_time_series(times, flux, flux_err):
-    """Sort a light curve by time while preserving aligned measurements."""
-    times = np.asarray(times)
-    flux = np.asarray(flux)
-    flux_err = np.asarray(flux_err)
-
-    if not (len(times) == len(flux) == len(flux_err)):
-        raise ValueError("time, flux, and flux_err must have the same length")
-
-    order = np.argsort(times, kind="stable")
-    return times[order], flux[order], flux_err[order]
-
-
 def tic_id_from_simbad(other_id):
     """
     Queries Simbad to obtain the TIC ID corresponding to the given identifier.
@@ -566,13 +553,6 @@ def get_light_curve(
         xs = lc.time.value
         ys = lc.flux
         ys_err = lc.flux_err
-
-
-    # LightCurveCollection.stitch preserves collection order, which is not
-    # guaranteed to be chronological across sectors. Downstream celerite GPs
-    # require monotonically ordered times, so sort all measurements together
-    # before constructing masks or splitting the light curve into epochs.
-    xs, ys, ys_err = _sort_time_series(xs, ys, ys_err)
 
 
     # Define masks for all planets. Explicit transit centers take precedence

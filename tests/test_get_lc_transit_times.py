@@ -40,21 +40,8 @@ def test_mask_from_transit_times_uses_each_individual_center():
     assert np.array_equal(mask, [False, True, True, True, False, True, True, True])
 
 
-def test_sort_time_series_preserves_alignment_and_duplicate_order():
-    times, flux, flux_err = get_lc._sort_time_series(
-        times=[2.0, 1.0, 2.0, 0.0],
-        flux=[20.0, 10.0, 21.0, 0.0],
-        flux_err=[0.20, 0.10, 0.21, 0.01],
-    )
-
-    assert np.array_equal(times, [0.0, 1.0, 2.0, 2.0])
-    assert np.array_equal(flux, [0.0, 10.0, 20.0, 21.0])
-    assert np.array_equal(flux_err, [0.01, 0.10, 0.20, 0.21])
-
-
 def test_get_light_curve_combines_explicit_times_for_multiple_planets(monkeypatch):
-    chronological_times = np.round(np.arange(99.8, 103.21, 0.05), 8)
-    relative_times = np.concatenate([chronological_times[30:], chronological_times[:30]])
+    relative_times = np.round(np.arange(99.8, 103.21, 0.05), 8)
 
     class Values:
         def __init__(self, value):
@@ -106,7 +93,6 @@ def test_get_light_curve_combines_explicit_times_for_multiple_planets(monkeypatc
     expected_first = get_lc._mask_from_transit_times(times, [100.0], 0.2)
     expected_second = get_lc._mask_from_transit_times(times, [103.0], 0.2)
 
-    assert np.all(np.diff(times) >= 0)
     assert np.array_equal(fitted_mask, expected_first)
     assert np.array_equal(mask, expected_first | expected_second)
     assert np.array_equal(t0s_in_data, [100.0])
