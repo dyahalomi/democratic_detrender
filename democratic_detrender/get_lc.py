@@ -583,18 +583,18 @@ def get_light_curve(
     mask_fitted_planet = planet_masks[planet_number].copy()
 
     # save the period, duration, and t0 for the planet we are fitting for...
-    period = np.array([periods[planet_number - 1]])
+    period = periods[planet_number - 1]
     t0 = t0s[planet_number - 1]
     duration = np.array([durations[planet_number - 1]])
     if planet_number in transit_times_by_planet:
         t0 = transit_times_by_planet[planet_number][0]
 
     nan_values = []
-    if np.isnan(period[0]):
+    if np.isnan(period):
         nan_values.append("period")
     if np.isnan(t0):
         nan_values.append("t0")
-    if np.isnan(duration[0]):
+    if np.isnan(duration):
         nan_values.append("duration")
 
     if nan_values != []:
@@ -620,7 +620,7 @@ def get_light_curve(
         print("[  t0 [TESS BJD]  , P [days], tdur [hrs]")
     if Kepler:
         print("[ t0 [Kepler BJD] , P [days], tdur [hrs]")
-    print("[" + str(t0) + ", " + str(period[0]) + ", " + str(duration[0]) + "]")
+    print("[" + str(t0) + ", " + str(period) + ", " + str(duration) + "]")
 
     min_time = xs.min()
     max_time = xs.max()

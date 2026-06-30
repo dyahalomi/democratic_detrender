@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.10', '3.11', '3.12', '3.13']
 
     steps:
       - name: Checkout code
@@ -38,4 +38,4 @@ jobs:
       - name: Run unit tests
         run: |
           mkdir -p test-reports
-          py.test -v --junitxml=test-reports/junit.xml democratic_detrender/tests.py
+          py.test -v --junitxml=test-reports/junit.xml tests/test_*.py
