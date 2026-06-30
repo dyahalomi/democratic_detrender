@@ -73,7 +73,8 @@ def fake_input_dir(tmp_path):
     orbital_df = pd.DataFrame(
         {
             "period": [5.0],      # days
-            "duration": [2.0],    # hours
+            # Older detrend_all versions serialized one-element arrays this way.
+            "duration": ["[2.0]"],
         }
     )
     orbital_df.to_csv(target_dir / "orbital_data.csv", index=False)
@@ -102,7 +103,11 @@ def test_method_reject_runs_with_monkeypatch(fake_input_dir, monkeypatch):
     # reject_via_DW returns:
     #   dw_sigma_test, DWMC_epochs, DWdetrend_epochs, DWupper_bound_epochs
     # We'll just make simple placeholders with matching shapes.
+    received_orbital_values = {}
+
     def _fake_reject_via_DW(time_epochs, y_epochs, yerr_epochs, t0s, period, duration, niter=100000):
+        received_orbital_values["period"] = period
+        received_orbital_values["duration"] = duration
         # sigma thresholds (per epoch, per detrending method) -> ones
         dw_sigma_test = [np.ones(len(y_epochs[i].columns)) for i in range(len(y_epochs))]
         # MC epochs, detrended epochs, upper bound epochs: mimic y_epochs shapes
@@ -227,6 +232,8 @@ def test_method_reject_runs_with_monkeypatch(fake_input_dir, monkeypatch):
 
     assert np.all(np.isfinite(out_df["method marginalized"].to_numpy()))
     assert np.all(np.isfinite(out_df["yerr"].to_numpy()))
+    assert np.isclose(received_orbital_values["period"], 5.0)
+    assert np.isclose(received_orbital_values["duration"], 1.1 * 2.0 / 24.0)
 
     # ---- Side effects
     # It should write:

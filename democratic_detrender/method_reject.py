@@ -9,6 +9,29 @@ from democratic_detrender.method_rejection_functions_binning import reject_via_b
 from democratic_detrender.method_rejection_functions_general import ensemble_step, merge_epochs, reject_epochs_by_white_noise_tests
 
 
+def _as_scalar_float(value, name):
+    """Coerce a scalar or one-element container to a float."""
+    if isinstance(value, pd.Series):
+        value = value.iloc[0]
+    else:
+        values = np.asarray(value)
+        if values.size != 1:
+            raise ValueError(f"{name} must contain exactly one value")
+        value = values.reshape(-1)[0]
+
+    # Support orbital_data.csv files written by older versions, where a
+    # one-element NumPy array was serialized as a bracketed string.
+    if isinstance(value, str):
+        value = value.strip()
+        if value.startswith("[") and value.endswith("]"):
+            value = value[1:-1].strip()
+
+    try:
+        return float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be a numeric scalar; received {value!r}") from exc
+
+
 
 
 def method_reject(path, input_depth=0.01, input_period=None, input_duration=None, input_mask_width=1.1):
@@ -21,11 +44,8 @@ def method_reject(path, input_depth=0.01, input_period=None, input_duration=None
 
     orbital_data = pd.read_csv(path+'/orbital_data.csv')
 
-    if input_period == None:
-        period = orbital_data['period']
-    
-    if input_duration == None:
-        duration = orbital_data['duration']
+    period_source = orbital_data['period'] if input_period is None else input_period
+    duration_source = orbital_data['duration'] if input_duration is None else input_duration
 
     t0s = list(pd.read_csv(path+'/t0s.csv')['t0s_in_data'])
 
@@ -61,8 +81,8 @@ def method_reject(path, input_depth=0.01, input_period=None, input_duration=None
         t0s_used.append(t0s_arr[k])
     pd.DataFrame({'t0s_used': t0s_used}).to_csv(path + '/final_t0s.csv', index=False)
 
-    period = period[0]
-    duration=input_mask_width*duration[0]/24.
+    period = _as_scalar_float(period_source, "period")
+    duration = input_mask_width * _as_scalar_float(duration_source, "duration") / 24.0
 
 
     # START OF METHOD REJECTION TESTS!!!!

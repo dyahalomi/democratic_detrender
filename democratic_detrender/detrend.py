@@ -717,9 +717,14 @@ def detrend_all(
         print("invalid flux_type value entered...options are: pdc, sap, or both")
         return None
 
+    # get_light_curve historically returns some single-planet values as
+    # one-element arrays. Store numeric scalars so CSV readers do not receive
+    # strings such as "[2.062]".
+    period_value = float(np.asarray(period_out).reshape(-1)[0])
+    duration_value = float(np.asarray(duration_out).reshape(-1)[0])
     orbital_data = pd.DataFrame({
-    'period': [period_out],
-    'duration': [duration_out],
+    'period': [period_value],
+    'duration': [duration_value],
     })
 
     orbital_data.to_csv(path + '/' + 'orbital_data.csv', index=False)
